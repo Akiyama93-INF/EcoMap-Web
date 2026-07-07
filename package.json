@@ -11,17 +11,21 @@
     "lint": "eslint src --ext js,jsx"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "firebase": "^10.3.1",
+    "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.14.0",
-    "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "firebase": "^10.3.1"
+    "react-router-dom": "^6.14.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.3",
-    "vite": "^4.3.9",
     "eslint": "^8.45.0",
-    "eslint-plugin-react": "^7.32.2"
+    "eslint-plugin-react": "^7.32.2",
+    "vite": "^4.3.9"
   }
 }
