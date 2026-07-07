@@ -37,3 +37,10 @@ build/
 .firebase/
 .firebaserc
 firebase-debug.log
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/build/
+*.jks
+*.keystore
