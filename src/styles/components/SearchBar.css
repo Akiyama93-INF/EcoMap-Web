@@ -1,0 +1,118 @@
+.searchbar-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchbar-input-row {
+  display: flex;
+  align-items: center;
+  background-color: var(--white);
+  border: 1.5px solid #bdc3c7;
+  border-radius: var(--border-radius);
+  padding: 0 0.6rem;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
+}
+
+.searchbar-input-row:focus-within {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.searchbar-icon {
+  color: var(--text-light);
+  flex-shrink: 0;
+  margin-right: 0.4rem;
+}
+
+.searchbar-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchbar-input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.searchbar-clear {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.searchbar-clear:hover {
+  color: var(--danger-color);
+  transform: none;
+  box-shadow: none;
+}
+
+.searchbar-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--white);
+  border: 1px solid #dde1e3;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  padding: 0.3rem 0;
+  margin: 0;
+  z-index: 1000;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.searchbar-status {
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.searchbar-error {
+  color: var(--danger-color);
+}
+
+.searchbar-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.searchbar-item:hover {
+  background-color: #f0f7ff;
+}
+
+.searchbar-item-icon {
+  color: var(--secondary-color);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.searchbar-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

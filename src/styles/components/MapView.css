@@ -1,0 +1,298 @@
+.mapview-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+}
+
+.mapview {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.leaflet-container {
+  font-family: inherit;
+  z-index: 1;
+}
+
+.popup-content {
+  text-align: left;
+}
+
+.popup-content h4 {
+  margin-bottom: 0.5rem;
+}
+
+.popup-content p {
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+.popup-content img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: var(--border-radius);
+  margin: 0.5rem 0;
+}
+
+.map-info {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--white);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  max-width: 250px;
+  z-index: 10;
+}
+
+.map-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.map-info p:first-child {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.leaflet-control-container {
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .mapview-container {
+    min-height: 300px;
+  }
+
+  .map-info {
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ── Marcador de ubicación del usuario ────────────────────────── */
+.user-location-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-location-dot {
+  width: 12px;
+  height: 12px;
+  background-color: #3b82f6;
+  border: 2.5px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 2;
+}
+
+.user-location-pulse {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: rgba(59, 130, 246, 0.25);
+  border-radius: 50%;
+  animation: pulse-ring 2s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Marcadores por categoría (DivIcon) ───────────────────────── */
+.cat-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+}
+
+.cat-marker-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: var(--marker-color, #7f8c8d);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+  font-size: 16px;
+  border: 2.5px solid white;
+  transition: transform 0.15s;
+}
+
+.cat-marker-symbol > * {
+  transform: rotate(45deg);
+  display: block;
+}
+
+.cat-marker-tail {
+  width: 2px;
+  height: 6px;
+  background-color: var(--marker-color, #7f8c8d);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ── Popup enriquecido dentro del mapa ────────────────────────── */
+.popup-category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.popup-img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 0.4rem 0;
+}
+
+.popup-description {
+  font-size: 0.875rem;
+  color: var(--text-color);
+  line-height: 1.5;
+  margin: 0.4rem 0;
+}
+
+.popup-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin: 0.4rem 0;
+}
+
+.popup-label {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.popup-details-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.4rem;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: none;
+}
+
+.popup-details-btn:hover {
+  background-color: #27ae60;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Fase 3: popup de acciones ───────────────────────────────── */
+.popup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.popup-confirm-btn {
+  width: 100%;
+  padding: 0.38rem;
+  background-color: #f0f9f4;
+  color: #27ae60;
+  border: 1.5px solid #27ae60;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s;
+  box-shadow: none;
+}
+
+.popup-confirm-btn:hover:not(:disabled) {
+  background-color: #27ae60;
+  color: white;
+  transform: none;
+  box-shadow: none;
+}
+
+.popup-confirm-btn.confirmed,
+.popup-confirm-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+  background-color: #e8f8f0;
+}
+
+.popup-confirmations {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.popup-confirm-err {
+  font-size: 0.78rem;
+  color: var(--danger-color);
+  margin: 0.2rem 0;
+}
+
+/* ── Fase 3: subtypes en popup ───────────────────────────────── */
+.popup-subtypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.4rem 0;
+}
+
+.popup-subtype-chip {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 20px;
+  background-color: #f0f9f4;
+  color: #27ae60;
+  border: 1px solid #b2dfcb;
+}
+
+/* Mover controles de zoom para que no choquen con la barra */
+.leaflet-top.leaflet-left .leaflet-control-zoom {
+  margin-top: 70px;
+  margin-left: 10px;
+}
+
+/* ── Aviso fuera de límites ──────────────────────────────────── */
+.map-out-of-bounds {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  background-color: rgba(231, 76, 60, 0.92);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease-in-out;
+}

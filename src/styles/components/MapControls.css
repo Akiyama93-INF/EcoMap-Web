@@ -1,0 +1,28 @@
+/* Controles superpuestos al mapa */
+.map-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 500;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  pointer-events: none; /* El contenedor no bloquea clics en el mapa */
+}
+
+/* Los hijos sí deben capturar clics */
+.map-controls > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 600px) {
+  .map-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.map-controls.hidden-behind-form {
+  z-index: 100 !important;
+}

@@ -1,0 +1,234 @@
+.marker-list {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.marker-list-title {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marker-list-count {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 0.1rem 0.55rem;
+}
+
+.marker-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.marker-item {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--border-radius);
+  border: 1px solid #e8ecef;
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.18s;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.marker-item:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+
+.marker-item-stripe {
+  width: 4px;
+  flex-shrink: 0;
+}
+
+.marker-item-body {
+  flex: 1;
+  padding: 0.7rem 0.75rem;
+  min-width: 0;
+}
+
+.marker-item-header {
+  margin-bottom: 0.3rem;
+}
+
+.marker-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+}
+
+.marker-item-desc {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin: 0.2rem 0;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marker-item-footer {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.marker-item-footer small {
+  font-size: 0.76rem;
+  color: var(--text-light);
+}
+
+.marker-item-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 0.6rem;
+  color: var(--text-light);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.no-markers {
+  text-align: center;
+  color: var(--text-light);
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .marker-list {
+    max-height: none;
+  }
+}
+
+/* ── Fase 3: encabezado con filtro ───────────────────────────── */
+.marker-list-header {
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.6rem;
+}
+
+.marker-list-title {
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.marker-filter {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1.5px solid #bdc3c7;
+  border-radius: 20px;
+  background: var(--white);
+  font-size: 0.8rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  box-shadow: none;
+}
+
+.filter-btn:hover {
+  background-color: #f0f0f0;
+  transform: none;
+  box-shadow: none;
+}
+
+.filter-btn.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+/* ── Fase 3: confirmaciones en ítem ─────────────────────────── */
+.marker-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.marker-item-confirms {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #27ae60;
+  white-space: nowrap;
+}
+
+/* ── Fase 3: chips de materiales en ítem ────────────────────── */
+.marker-item-subtypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+}
+
+.marker-subtype-chip {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 12px;
+  background-color: #f0f9f4;
+  color: #27ae60;
+  border: 1px solid #b2dfcb;
+}
+
+/* ── Fase 4: badge de estado en ítem ────────────────────────── */
+.marker-item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.marker-status-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.marker-status-badge.marker-status-pending {
+  background-color: #fef9e7;
+  color: #f39c12;
+  border: 1px solid #f39c12;
+}
+
+.marker-status-badge.marker-status-confirmed {
+  background-color: #e8f8f0;
+  color: #27ae60;
+  border: 1px solid #27ae60;
+}
+
+.marker-status-badge.marker-status-resolved {
+  background-color: #eaf4fb;
+  color: #2980b9;
+  border: 1px solid #2980b9;
+}
