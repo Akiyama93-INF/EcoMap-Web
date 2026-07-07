@@ -1,13 +1,11 @@
-SITIO WEB ANTES QUE TODO:https://ecomapwebproyect.netlify.app/
-
-
-
 # 🌱 EcoMap - Mapa Ecológico de El Salvador
 
 **EcoMap** es una plataforma web y aplicación móvil que permite reportar, visualizar y gestionar puntos ecológicos y basureros clandestinos en El Salvador mediante un mapa interactivo.
 
 El objetivo es facilitar la participación ciudadana en la identificación de problemas ambientales, manteniendo un sistema organizado de reportes con validaciones, imágenes y seguimiento comunitario.
 
+SITIO WEB ANTES QUE TODO: 
+https://ecomapwebproyect.netlify.app/
 ---
 
 # 📋 Características principales
