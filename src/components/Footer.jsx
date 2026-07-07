@@ -17,7 +17,12 @@ function Footer() {
         <div className="footer-section">
           <h4>Contactanos</h4>
           <ul>
-             <h4>RELLENAR CAMPOS AL FINAL</h4>
+            <li>Equipo EcoMap
+
+Para consultas relacionadas con el proyecto:
+
+<h4>ecomap.proyecto@gmail.com</h4>
+          </li>
           </ul>
         </div>
       </div>
