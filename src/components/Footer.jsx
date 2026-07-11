@@ -9,7 +9,7 @@ function Footer() {
       <div className="footer-container">
         <div className="footer-section">
           <h3>EcoMap</h3>
-          <p>Plataforma para reportar basureros clandestinos en El Salvador, realizado por estudiantes
+          <p>Plataforma para reportar puntos tanto como basureros clandestinos y puntos ecologicos en El Salvador, realizado por estudiantes
             del Instituto Nacional de Santa Ana (INSA) de la especialidad ITSI 2° "H" como parte de su proyecto tecnológico.
           </p>
         </div>

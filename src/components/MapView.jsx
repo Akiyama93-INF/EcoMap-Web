@@ -9,7 +9,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   MapContainer, TileLayer, Marker, Popup,
-  Circle, useMap, useMapEvents,
+  Circle, useMap, useMapEvents, ZoomControl,
 } from 'react-leaflet'
 import L from 'leaflet'
 import useGeolocation from '../hooks/useGeolocation'
@@ -153,7 +153,14 @@ function MapView({
         </div>
       )}
 
-      <MapContainer center={EL_SALVADOR_CENTER} zoom={9} className="mapview">
+      <MapContainer
+        center={EL_SALVADOR_CENTER}
+        zoom={9}
+        className="mapview"
+        zoomControl={false}
+      >
+        <ZoomControl position="topright" />
+
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -250,7 +257,6 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
       })
     : 'Sin fecha'
 
-  // Materiales aceptados (solo Punto ecológico)
   const subtypeLabels = (cat?.subtypes ?? [])
     .filter((s) => (marker.subtypes ?? []).includes(s.id))
     .map((s) => `${s.icon} ${s.label}`)
@@ -272,21 +278,17 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
 
   return (
     <div className="popup-content">
-      {/* Badge de categoría */}
       <div className="popup-category-badge" style={{ backgroundColor: color }}>
         <span>{cat?.icon ?? '📍'}</span>
         <span>{marker.category}</span>
       </div>
 
-      {/* Imagen */}
       {marker.imageUrl && (
         <img src={marker.imageUrl} alt="Reporte" className="popup-img" />
       )}
 
-      {/* Descripción */}
       <p className="popup-description">{marker.description}</p>
 
-      {/* Materiales del punto ecológico */}
       {subtypeLabels.length > 0 && (
         <div className="popup-subtypes">
           {subtypeLabels.map((l) => (
@@ -295,7 +297,6 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
         </div>
       )}
 
-      {/* Meta */}
       <div className="popup-meta">
         <span>👤 {marker.userName ?? 'Anónimo'}</span>
         <span>📅 {fecha}</span>
@@ -308,9 +309,7 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
 
       {confirmErr && <p className="popup-confirm-err">{confirmErr}</p>}
 
-      {/* Acciones */}
       <div className="popup-actions">
-        {/* Botón de confirmación: solo usuarios autenticados que no son el autor */}
         {currentUserId && !isOwner && (
           <button
             className={`popup-confirm-btn${alreadyConfirmed ? ' confirmed' : ''}`}
