@@ -3,6 +3,7 @@
   width: 100%;
   height: 100%;
   min-height: 500px;
+  overflow: hidden;   /* ← solo agrega esto */
 }
 
 .mapview {
@@ -271,12 +272,6 @@
   background-color: #f0f9f4;
   color: #27ae60;
   border: 1px solid #b2dfcb;
-}
-
-/* ── Controles de zoom (esquina derecha) ─────────────────────── */
-.leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin-top: 10px;
-  margin-right: 10px;
 }
 
 /* ── Aviso fuera de límites ──────────────────────────────────── */

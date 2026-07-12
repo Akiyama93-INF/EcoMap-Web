@@ -9,7 +9,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   MapContainer, TileLayer, Marker, Popup,
-  Circle, useMap, useMapEvents, ZoomControl,
+  Circle, useMap, useMapEvents,
 } from 'react-leaflet'
 import L from 'leaflet'
 import useGeolocation from '../hooks/useGeolocation'
@@ -20,11 +20,9 @@ import { getCategoryByName, CATEGORIES } from '../utils/categories'
 import { approximateLocation, getPrivacyRadius } from '../utils/privacy'
 import '../styles/components/MapView.css'
 
-// ─── Constantes geográficas ──────────────────────────────────────────────────
 const EL_SALVADOR_CENTER = [13.7942, -88.8965]
 const EL_SALVADOR_BOUNDS = [[12.8, -90.1], [14.8, -87.6]]
 
-// ─── Íconos por categoría ────────────────────────────────────────────────────
 function createCategoryIcon(color, symbol) {
   return L.divIcon({
     className: '',
@@ -51,7 +49,6 @@ function getIconForMarker(marker) {
   return (cat && CATEGORY_ICONS[cat.id]) ? CATEGORY_ICONS[cat.id] : DEFAULT_ICON
 }
 
-// ─── Helpers internos del mapa ───────────────────────────────────────────────
 function MapBounds({ onOutOfBounds }) {
   const map = useMap()
 
@@ -94,7 +91,6 @@ function MarkerOpener({ markerId, markerRefs }) {
   return null
 }
 
-// ─── Componente principal ────────────────────────────────────────────────────
 function MapView({
   onMarkerPlace,
   markers = [],
@@ -146,7 +142,6 @@ function MapView({
         showReportForm={showReportForm}
       />
 
-      {/* Aviso fuera de límites */}
       {outOfBoundsMsg && (
         <div className="map-out-of-bounds">
           EcoMap solo opera dentro de El Salvador.
@@ -159,8 +154,6 @@ function MapView({
         className="mapview"
         zoomControl={false}
       >
-        <ZoomControl position="topright" />
-
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -236,7 +229,6 @@ function MapView({
   )
 }
 
-// ─── Popup inline del mapa ───────────────────────────────────────────────────
 function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
   const color = cat?.color ?? '#7f8c8d'
 
