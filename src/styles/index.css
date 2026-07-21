@@ -9,9 +9,43 @@
   --text-light: #7f8c8d;
   --bg-color: #ecf0f1;
   --white: #ffffff;
+  --surface: #ffffff;
+  --border-color: #bdc3c7;
+  --border-subtle: #e0e0e0;
+  --input-bg: #ffffff;
+  --hover-bg: #f5f5f5;
+  --cancel-hover: #dde1e3;
+  --info-bg: #eaf4fb;
+  --info-border: #aed6f1;
+  --info-text: #1a5276;
+  --warning-bg: #fef9e7;
+  --warning-text: #7d6608;
+  --success-bg: #d5f4e6;
+  --error-bg: #fadbd8;
   --border-radius: 8px;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+  --text-color: #e8eaf0;
+  --text-light: #9ba3af;
+  --bg-color: #1a1d23;
+  --white: #242830;
+  --surface: #242830;
+  --border-color: #3a3f4b;
+  --border-subtle: #2e333d;
+  --input-bg: #1e2129;
+  --hover-bg: #2e333d;
+  --cancel-hover: #363b47;
+  --info-bg: #1a2535;
+  --info-border: #2c4a6e;
+  --info-text: #7ab3d4;
+  --warning-bg: #2a2010;
+  --warning-text: #d4a843;
+  --success-bg: #0f2318;
+  --error-bg: #2a1015;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -84,12 +118,14 @@ input,
 textarea,
 select {
   font-family: inherit;
-  border: 1px solid #bdc3c7;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 0.75rem;
   font-size: 1rem;
   transition: var(--transition);
   width: 100%;
+  background-color: var(--input-bg);
+  color: var(--text-color);
 }
 
 input:focus,
@@ -148,7 +184,7 @@ a:hover {
 }
 
 .error-message {
-  background-color: #fadbd8;
+  background-color: var(--error-bg);
   color: var(--danger-color);
   padding: 1rem;
   border-radius: var(--border-radius);
@@ -157,7 +193,7 @@ a:hover {
 }
 
 .success-message {
-  background-color: #d5f4e6;
+  background-color: var(--success-bg);
   color: var(--primary-color);
   padding: 1rem;
   border-radius: var(--border-radius);
@@ -166,7 +202,7 @@ a:hover {
 }
 
 .warning-message {
-  background-color: #fdebd0;
+  background-color: var(--warning-bg);
   color: var(--warning-color);
   padding: 1rem;
   border-radius: var(--border-radius);

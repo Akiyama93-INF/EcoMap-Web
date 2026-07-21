@@ -108,6 +108,26 @@
   transform: translateY(-1px);
 }
 
+.theme-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0.35rem 0.6rem;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: var(--border-radius);
+}
+
+.theme-btn:hover {
+  background-color: var(--hover-bg);
+  transform: none;
+  box-shadow: none;
+}
+
+.navbar {
+  background-color: var(--white);
+}
+
 @media (max-width: 768px) {
   .navbar-container {
     height: auto;

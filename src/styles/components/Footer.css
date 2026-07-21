@@ -21,7 +21,7 @@
 }
 
 .footer-section p {
-  color: #bdc3c7;
+  color: var(--text-light);
   line-height: 1.8;
   margin-bottom: 0;
 }
@@ -36,7 +36,7 @@
 }
 
 .footer-section a {
-  color: #bdc3c7;
+  color: var(--text-light);
   text-decoration: none;
   transition: var(--transition);
 }
@@ -46,10 +46,10 @@
 }
 
 .footer-bottom {
-  border-top: 1px solid #34495e;
+  border-top: 1px solid var(--border-color);
   padding-top: 1rem;
   text-align: center;
-  color: #95a5a6;
+  color: var(--text-light);
   font-size: 0.9rem;
 }
 

@@ -221,7 +221,7 @@
 .popup-confirm-btn {
   width: 100%;
   padding: 0.38rem;
-  background-color: #f0f9f4;
+  background-color: var(--success-bg);
   color: #27ae60;
   border: 1.5px solid #27ae60;
   border-radius: 6px;
@@ -243,7 +243,7 @@
 .popup-confirm-btn:disabled {
   opacity: 0.7;
   cursor: default;
-  background-color: #e8f8f0;
+  background-color: var(--success-bg);
 }
 
 .popup-confirmations {
@@ -269,9 +269,9 @@
   font-size: 0.72rem;
   padding: 0.15rem 0.45rem;
   border-radius: 20px;
-  background-color: #f0f9f4;
+  background-color: var(--success-bg);
   color: #27ae60;
-  border: 1px solid #b2dfcb;
+  border: 1px solid var(--primary-color);
 }
 
 /* ── Aviso fuera de límites ──────────────────────────────────── */

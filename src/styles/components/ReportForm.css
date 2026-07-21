@@ -46,7 +46,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.75rem;
-  border: 1.5px solid #e0e0e0;
+  border: 1.5px solid var(--border-subtle);
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: border-color 0.2s, background-color 0.2s;
@@ -63,7 +63,7 @@
 }
 
 .category-option:hover {
-  background-color: #f5f5f5;
+  background-color: var(--hover-bg);
 }
 
 .category-option.selected {
@@ -96,7 +96,7 @@
 .form-group select {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border: 1px solid #bdc3c7;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   font-size: 0.95rem;
   transition: var(--transition);
@@ -147,12 +147,12 @@
   color: var(--text-color);
   border-radius: var(--border-radius);
   font-weight: 500;
-  border: 1px solid #bdc3c7;
+  border: 1px solid var(--border-color);
   box-shadow: none;
 }
 
 .cancel-btn:hover:not(:disabled) {
-  background-color: #dde1e3;
+  background-color: var(--cancel-hover);
   transform: none;
   box-shadow: none;
 }
@@ -181,7 +181,7 @@
 }
 
 .error-message {
-  background-color: #fadbd8;
+  background-color: var(--error-bg);
   color: var(--danger-color);
   padding: 0.75rem;
   border-radius: var(--border-radius);
@@ -205,7 +205,7 @@
 
 .subtype-chip {
   padding: 0.35rem 0.65rem;
-  border: 1.5px solid #bdc3c7;
+  border: 1.5px solid var(--border-color);
   border-radius: 20px;
   background: var(--white);
   font-size: 0.82rem;
@@ -216,7 +216,7 @@
 }
 
 .subtype-chip:hover {
-  background-color: #f5f5f5;
+  background-color: var(--hover-bg);
   transform: none;
   box-shadow: none;
 }
@@ -230,21 +230,21 @@
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  background-color: #eaf4fb;
-  border: 1px solid #aed6f1;
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
   border-left: 4px solid var(--secondary-color);
   border-radius: var(--border-radius);
   padding: 0.6rem 0.75rem;
   margin-bottom: 1rem;
   font-size: 0.82rem;
-  color: #1a5276;
+  color: var(--info-text);
   line-height: 1.5;
 }
 
 .image-help {
   display: block;
   margin-top: 4px;
-  color: #666;
+  color: var(--text-light);
   font-size: 0.8rem;
   font-weight: normal;
 }
@@ -261,8 +261,8 @@
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--border-radius);
-  border: 1.5px solid #e0e0e0;
-  background-color: #f9f9f9;
+  border: 1.5px solid var(--border-subtle);
+  background-color: var(--hover-bg);
 }
 
 .image-preview {
@@ -278,9 +278,9 @@
 
 /* ── Aviso de reporte cercano ────────────────────────────────── */
 .nearby-report-warning {
-  background-color: #fef9e7;
-  border: 1px solid #f39c12;
-  border-left: 4px solid #f39c12;
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-color);
+  border-left: 4px solid var(--warning-color);
   border-radius: var(--border-radius);
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -289,13 +289,13 @@
 .nearby-report-title {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #7d6608;
+  color: var(--warning-text);
   margin: 0 0 0.25rem;
 }
 
 .nearby-report-desc {
   font-size: 0.82rem;
-  color: #7d6608;
+  color: var(--warning-text);
   margin: 0 0 0.75rem;
 }
 
@@ -328,8 +328,8 @@
   flex: 1;
   padding: 0.5rem 0.75rem;
   background-color: transparent;
-  color: #7d6608;
-  border: 1px solid #f39c12;
+  color: var(--warning-text);
+  border: 1px solid var(--warning-color);
   border-radius: var(--border-radius);
   font-size: 0.85rem;
   cursor: pointer;
@@ -337,7 +337,7 @@
 }
 
 .nearby-ignore-btn:hover {
-  background-color: #fef0cd;
+  background-color: var(--warning-bg);
   transform: none;
   box-shadow: none;
 }
@@ -347,22 +347,22 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background-color: #eaf4fb;
-  border: 1px solid #aed6f1;
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
   border-left: 4px solid var(--secondary-color);
   border-radius: var(--border-radius);
   padding: 0.6rem 0.75rem;
   margin-bottom: 1rem;
   font-size: 0.88rem;
-  color: #1a5276;
+  color: var(--info-text);
   font-weight: 500;
 }
 
 .progress-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid #aed6f1;
-  border-top-color: #2980b9;
+  border: 2px solid var(--info-border);
+  border-top-color: var(--secondary-color);
   border-radius: 50%;
   flex-shrink: 0;
   animation: spin 0.7s linear infinite;

@@ -50,7 +50,7 @@
 }
 
 .login-prompt {
-  background-color: #d5f4e6;
+  background-color: var(--success-bg);
   padding: 0.75rem;
   border-radius: var(--border-radius);
   border-left: 4px solid var(--primary-color);

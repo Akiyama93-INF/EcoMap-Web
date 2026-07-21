@@ -4,11 +4,13 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import authService from '../firebase/authService'
+import useTheme from '../hooks/useTheme'
 import '../styles/components/Navbar.css'
 
 function Navbar() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { isDark, toggleTheme } = useTheme()
 
   useEffect(() => {
     const unsubscribe = authService.onAuthChange((currentUser) => {
@@ -36,6 +38,13 @@ function Navbar() {
 
         <div className="navbar-menu">
           <Link to="/" className="navbar-link">Inicio</Link>
+          <button
+            onClick={toggleTheme}
+            className="navbar-btn theme-btn"
+            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
 
           {!loading && (
             <>

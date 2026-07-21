@@ -52,7 +52,7 @@
 }
 
 .location-btn-error {
-  background-color: #fdebd0;
+  background-color: var(--warning-bg);
   color: #c0392b;
   font-size: 0.78rem;
   padding: 0.4rem 0.6rem;
