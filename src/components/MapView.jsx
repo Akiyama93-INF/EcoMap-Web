@@ -5,6 +5,8 @@
 //   - Botón "Confirmar" en el popup del mapa (reportes colaborativos)
 //   - Materiales aceptados visibles en popup de Punto ecológico
 //   - Props nuevas: currentUserId, onConfirmReport
+// Fix aplicado:
+//   - mapRef + invalidateSize() al cambiar showReportForm (bug resolución mapa)
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
@@ -114,6 +116,18 @@ function MapView({
 
   const markerRefs = useRef({})
 
+  // ← FIX: ref al mapa para poder llamar invalidateSize()
+  const mapRef = useRef(null)
+
+  // ← FIX: cuando el sidebar abre o cierra, el mapa recalcula su tamaño
+  useEffect(() => {
+    if (mapRef.current) {
+      setTimeout(() => {
+        mapRef.current.invalidateSize()
+      }, 300)
+    }
+  }, [showReportForm])
+
   const handleMapClick = useCallback((loc) => {
     setClickedLocation(loc)
     if (onMarkerPlace) onMarkerPlace(loc)
@@ -148,11 +162,13 @@ function MapView({
         </div>
       )}
 
+      {/* ← FIX: ref={mapRef} para acceder a la instancia de Leaflet */}
       <MapContainer
         center={EL_SALVADOR_CENTER}
         zoom={9}
         className="mapview"
         zoomControl={false}
+        ref={mapRef}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
