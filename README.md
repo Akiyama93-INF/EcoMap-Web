@@ -349,8 +349,11 @@ Para consultas, sugerencias o colaboración:
 
 ---
 
-## 🌎 EcoMap v1.0
+## 🌎 EcoMap v2.0.0
 
 Primera versión estable con plataforma web y aplicación Android.
+
+La version para dispositivos Android se seguira trabajando con el mismo enfoque para 
+el pueblo salvadoreño y que podamos ser mas en esta aplicación
 
 Construido para facilitar la participación ciudadana y mejorar la gestión de problemas ambientales en El Salvador.
