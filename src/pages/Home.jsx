@@ -3,17 +3,21 @@
 //   - Validación de ubicación fuera de El Salvador
 //   - Mensajes de progreso por pasos en handleReportSubmit
 //   - onConfirmExisting para reportes duplicados
+// Actualizado:
+//   - isDark desde useTheme pasado a MapView para tiles oscuros
+//   - isOffline desde useReports para mostrar banner sin conexión
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import MapView          from '../components/MapView'
-import ReportForm       from '../components/ReportForm'
-import ReportPopup      from '../components/ReportPopup'
-import MarkerList       from '../components/MarkerList'
-import Loading          from '../components/Loading'
-import useAuth          from '../hooks/useAuth'
-import useReports       from '../hooks/useReports'
-import firestoreService from '../firebase/firestoreService'
+import MapView           from '../components/MapView'
+import ReportForm        from '../components/ReportForm'
+import ReportPopup       from '../components/ReportPopup'
+import MarkerList        from '../components/MarkerList'
+import Loading           from '../components/Loading'
+import useAuth           from '../hooks/useAuth'
+import useReports        from '../hooks/useReports'
+import useTheme          from '../hooks/useTheme'
+import firestoreService  from '../firebase/firestoreService'
 import cloudinaryService from '../firebase/cloudinaryService'
 import { getCategoryByName } from '../utils/categories'
 import '../styles/pages/Home.css'
@@ -25,8 +29,9 @@ const EL_SALVADOR_BOUNDS = {
 
 function Home() {
   const navigate = useNavigate()
-  const { user, loading: authLoading }           = useAuth()
-  const { reports: markers, loading: reportsLoading, refresh } = useReports()
+  const { user, loading: authLoading }                          = useAuth()
+  const { reports: markers, loading: reportsLoading, isOffline, refresh } = useReports()
+  const { isDark } = useTheme()
 
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [showReportForm,   setShowReportForm]   = useState(false)
@@ -74,6 +79,9 @@ function Home() {
   const handleReportSubmit = async (formData, onProgress) => {
     try {
       let imageUrl = null
+      if (formData.image && isOffline) {
+        throw new Error('Sin conexión — no se pueden subir imágenes. Envía el reporte sin foto o intenta más tarde.')
+      }
       if (formData.image) {
         onProgress?.('Subiendo imagen...')
         imageUrl = await cloudinaryService.uploadImage(formData.image)
@@ -128,6 +136,14 @@ function Home() {
 
   return (
     <div className="home">
+
+      {/* ← Banner de modo offline */}
+      {isOffline && (
+        <div className="offline-banner">
+          Sin conexión — mostrando datos en caché. Los reportes nuevos se enviarán al reconectarse.
+        </div>
+      )}
+
       <div className="home-container">
 
         {/* Mapa */}
@@ -140,6 +156,7 @@ function Home() {
             currentUserId={user?.uid ?? null}
             onConfirmReport={handleConfirmReport}
             showReportForm={showReportForm}
+            isDark={isDark}
           />
         </div>
 

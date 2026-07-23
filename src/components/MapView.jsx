@@ -7,6 +7,9 @@
 //   - Props nuevas: currentUserId, onConfirmReport
 // Fix aplicado:
 //   - mapRef + invalidateSize() al cambiar showReportForm (bug resolución mapa)
+// Actualizado:
+//   - useTheme() directo: tiles oscuros sin depender de prop isDark
+//   - CATEGORY_ICONS incluye CONTAMINATED_RIVER
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
@@ -15,6 +18,7 @@ import {
 } from 'react-leaflet'
 import L from 'leaflet'
 import useGeolocation from '../hooks/useGeolocation'
+import useTheme from '../hooks/useTheme'
 import MapControls from './map/MapControls'
 import UserLocationMarker from './map/UserLocationMarker'
 import MapFlyTo from './map/MapFlyTo'
@@ -24,6 +28,15 @@ import '../styles/components/MapView.css'
 
 const EL_SALVADOR_CENTER = [13.7942, -88.8965]
 const EL_SALVADOR_BOUNDS = [[12.8, -90.1], [14.8, -87.6]]
+
+const TILE_LIGHT = {
+  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+}
+const TILE_DARK = {
+  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+}
 
 function createCategoryIcon(color, symbol) {
   return L.divIcon({
@@ -42,6 +55,7 @@ const CATEGORY_ICONS = {
   [CATEGORIES.CLANDESTINE_DUMP.id]:       createCategoryIcon(CATEGORIES.CLANDESTINE_DUMP.mapColor,       CATEGORIES.CLANDESTINE_DUMP.icon),
   [CATEGORIES.ECOLOGICAL_POINT.id]:       createCategoryIcon(CATEGORIES.ECOLOGICAL_POINT.mapColor,       CATEGORIES.ECOLOGICAL_POINT.icon),
   [CATEGORIES.ENVIRONMENTAL_INCIDENT.id]: createCategoryIcon(CATEGORIES.ENVIRONMENTAL_INCIDENT.mapColor, CATEGORIES.ENVIRONMENTAL_INCIDENT.icon),
+  [CATEGORIES.CONTAMINATED_RIVER.id]:     createCategoryIcon(CATEGORIES.CONTAMINATED_RIVER.mapColor,     CATEGORIES.CONTAMINATED_RIVER.icon),
 }
 const DEFAULT_ICON  = createCategoryIcon('#7f8c8d', '📍')
 const CLICKED_ICON  = createCategoryIcon('#3498db', '📍')
@@ -102,6 +116,8 @@ function MapView({
   onConfirmReport,
   showReportForm,
 }) {
+  const { isDark } = useTheme() // ← lee del Context, siempre sincronizado
+
   const [clickedLocation, setClickedLocation]     = useState(null)
   const [internalFlyTarget, setInternalFlyTarget] = useState(null)
   const [outOfBoundsMsg, setOutOfBoundsMsg]       = useState(false)
@@ -115,11 +131,9 @@ function MapView({
   } = useGeolocation()
 
   const markerRefs = useRef({})
+  const mapRef     = useRef(null)
 
-  // ← FIX: ref al mapa para poder llamar invalidateSize()
-  const mapRef = useRef(null)
-
-  // ← FIX: cuando el sidebar abre o cierra, el mapa recalcula su tamaño
+  // invalidar tamaño del mapa cuando el sidebar abre/cierra
   useEffect(() => {
     if (mapRef.current) {
       setTimeout(() => {
@@ -146,6 +160,8 @@ function MapView({
     setTimeout(() => setOutOfBoundsMsg(false), 2500)
   }, [])
 
+  const tiles = isDark ? TILE_DARK : TILE_LIGHT
+
   return (
     <div className="mapview-container">
       <MapControls
@@ -162,7 +178,6 @@ function MapView({
         </div>
       )}
 
-      {/* ← FIX: ref={mapRef} para acceder a la instancia de Leaflet */}
       <MapContainer
         center={EL_SALVADOR_CENTER}
         zoom={9}
@@ -170,9 +185,11 @@ function MapView({
         zoomControl={false}
         ref={mapRef}
       >
+        {/* key fuerza remount del TileLayer al cambiar tema */}
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          key={isDark ? 'dark' : 'light'}
+          url={tiles.url}
+          attribution={tiles.attribution}
         />
 
         <MapBounds onOutOfBounds={handleOutOfBounds} />

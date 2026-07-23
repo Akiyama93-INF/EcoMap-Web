@@ -3,6 +3,9 @@
 //   - confirmReport(): votos colaborativos (arrayUnion, un voto por userId)
 //   - createReport(): guarda reportType explícito para que privacy.js no
 //     necesite inferirlo en cada render
+// Actualizado:
+//   - markAsClean(): marca un basurero clandestino como limpio/resuelto
+//   - subscribeToReports(): listener en tiempo real con onSnapshot (modo offline)
 
 import {
   collection,
@@ -15,6 +18,7 @@ import {
   query,
   where,
   arrayUnion,
+  onSnapshot,
   Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebaseInit'
@@ -27,9 +31,8 @@ export const firestoreService = {
     try {
       const docRef = await addDoc(collection(db, REPORTS_COLLECTION), {
         ...reportData,
-        // Campos nuevos en Fase 3
-        confirmations: [],      // [userId, ...] — máximo uno por usuario
-        confirmationCount: 0,   // desnormalizado para ordenar sin leer el array
+        confirmations: [],
+        confirmationCount: 0,
         status: 'active',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -40,7 +43,7 @@ export const firestoreService = {
     }
   },
 
-  // Obtener todos los reportes activos
+  // Obtener todos los reportes (lectura puntual — se mantiene para usos puntuales)
   async getReports() {
     try {
       const snapshot = await getDocs(collection(db, REPORTS_COLLECTION))
@@ -48,6 +51,23 @@ export const firestoreService = {
     } catch (error) {
       throw new Error(`Error al obtener reportes: ${error.message}`)
     }
+  },
+
+  // ← Listener en tiempo real: actualiza automáticamente online y offline
+  // Devuelve la función de cancelación (unsubscribe) — llamarla al desmontar
+  subscribeToReports(onData, onError) {
+    const q = collection(db, REPORTS_COLLECTION)
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+        onData(data)
+      },
+      (err) => {
+        console.error('subscribeToReports error:', err)
+        onError?.(err)
+      }
+    )
   },
 
   // Obtener reporte por ID
@@ -97,8 +117,6 @@ export const firestoreService = {
   },
 
   // ── Fase 3: Reportes colaborativos ───────────────────────────────────────
-  // Registra la confirmación de un usuario sobre un reporte existente.
-  // arrayUnion garantiza que un userId no se agrega dos veces.
   async confirmReport(reportId, userId) {
     try {
       const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
@@ -130,6 +148,20 @@ export const firestoreService = {
       })
     } catch (error) {
       throw new Error(`Error al actualizar estado: ${error.message}`)
+    }
+  },
+
+  // ── Basureros limpios ─────────────────────────────────────────────────────
+  async markAsClean(reportId, userId) {
+    try {
+      await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
+        status: 'resolved',
+        resolvedBy: userId,
+        resolvedAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      })
+    } catch (error) {
+      throw new Error(`Error al marcar como limpio: ${error.message}`)
     }
   },
 }

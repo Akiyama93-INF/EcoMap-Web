@@ -1,25 +1,14 @@
-import { useState, useEffect } from 'react'
+// hooks/useTheme.js
+// Actualizado: lee del ThemeContext en lugar de tener estado propio
+// Todos los componentes comparten el mismo isDark
+
+import { useContext } from 'react'
+import { ThemeContext } from '../context/ThemeContext'
 
 function useTheme() {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('ecomap-theme')
-    if (saved) return saved === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
-
-  useEffect(() => {
-    const root = document.documentElement
-    if (isDark) {
-      root.setAttribute('data-theme', 'dark')
-    } else {
-      root.removeAttribute('data-theme')
-    }
-    localStorage.setItem('ecomap-theme', isDark ? 'dark' : 'light')
-  }, [isDark])
-
-  const toggleTheme = () => setIsDark((prev) => !prev)
-
-  return { isDark, toggleTheme }
+  const context = useContext(ThemeContext)
+  if (!context) throw new Error('useTheme debe usarse dentro de ThemeProvider')
+  return context
 }
 
 export default useTheme

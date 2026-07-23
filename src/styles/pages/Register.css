@@ -83,6 +83,9 @@
   cursor: pointer;
   transition: var(--transition);
   margin-bottom: 1.5rem;
+  display: flex;
+align-items: center;
+justify-content: center;
 }
 
 .google-btn:hover:not(:disabled) {

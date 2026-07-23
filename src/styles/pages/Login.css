@@ -143,3 +143,9 @@
     padding: 1.5rem;
   }
 }
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
