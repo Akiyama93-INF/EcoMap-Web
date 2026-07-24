@@ -1,11 +1,15 @@
-// ReportForm — Fase 4
+// ReportForm — Fase 4 + Infraestructura urbana
 // Añadido:
-//   - Validación de descripción mínima (10 caracteres, sin spam)
-//   - Mensajes de progreso por pasos (Subiendo imagen / Guardando)
-//   - Detección de reportes duplicados por proximidad
+//   - Importación de WaterReportFields, PipelineReportFields, RoadReportFields
+//   - Secciones condicionales para chorro_publico, tuberia_danada, obstruccion_vial
+//   - metadata se construye limpio antes del submit (sin campos vacíos)
 
 import React, { useState, useEffect } from 'react'
 import { CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
+import PoleReportFields     from './PoleReportFields'
+import WaterReportFields    from './WaterReportFields'
+import PipelineReportFields from './PipelineReportFields'
+import RoadReportFields     from './RoadReportFields'
 import '../styles/components/ReportForm.css'
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
@@ -31,23 +35,42 @@ function validateDescription(desc) {
   return null
 }
 
+// IDs de categorías que tienen campos extra opcionales
+const INFRA_FIELDS = {
+  poste_luz:        'pole',
+  chorro_publico:   'water',
+  tuberia_danada:   'pipeline',
+  obstruccion_vial: 'road',
+}
+
+// Label del bloque de subtypes según categoría
+const SUBTYPE_LABELS = {
+  poste_luz:        'Tipo de fallo',
+  chorro_publico:   'Tipo de daño',
+  tuberia_danada:   'Tipo de daño',
+  obstruccion_vial: 'Tipo de obstrucción',
+}
+
 function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExisting }) {
   const [formData, setFormData] = useState({
-    description: '',
-    category:    CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
-    image:       null,
-    subtypes:    [],
+    description:   '',
+    category:      CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
+    image:         null,
+    subtypes:      [],
+    infraMetadata: {},
   })
-  const [isSubmitting,  setIsSubmitting]  = useState(false)
-  const [progressMsg,   setProgressMsg]   = useState(null)
-  const [error,         setError]         = useState(null)
-  const [nearbyReport,  setNearbyReport]  = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [progressMsg,  setProgressMsg]  = useState(null)
+  const [error,        setError]        = useState(null)
+  const [nearbyReport, setNearbyReport] = useState(null)
 
   const MAX_IMAGE_SIZE      = 5 * 1024 * 1024
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
-  const selectedCat = getCategoryByName(formData.category) ?? CATEGORIES_ARRAY[0]
-  const hasSubtypes = (selectedCat?.subtypes?.length ?? 0) > 0
+  const selectedCat   = getCategoryByName(formData.category) ?? CATEGORIES_ARRAY[0]
+  const hasSubtypes   = (selectedCat?.subtypes?.length ?? 0) > 0
+  const infraType     = INFRA_FIELDS[selectedCat?.id] ?? null
+  const subtypeLabel  = SUBTYPE_LABELS[selectedCat?.id] ?? 'Materiales aceptados'
 
   useEffect(() => {
     if (!location || markers.length === 0) { setNearbyReport(null); return }
@@ -58,7 +81,12 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   }, [location, markers])
 
   const handleCategoryChange = (e) => {
-    setFormData((p) => ({ ...p, category: e.target.value, subtypes: [] }))
+    setFormData((p) => ({
+      ...p,
+      category:      e.target.value,
+      subtypes:      [],
+      infraMetadata: {},
+    }))
   }
 
   const handleChange = (e) => {
@@ -92,26 +120,46 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     }))
   }
 
+  const handleInfraMetadata = (field, value) => {
+    setFormData((p) => ({
+      ...p,
+      infraMetadata: { ...p.infraMetadata, [field]: value },
+    }))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
 
-    // Validar descripción
     const descError = validateDescription(formData.description)
     if (descError) { setError(descError); return }
-
-    if (!location) { setError('Selecciona una ubicación en el mapa'); return }
+    if (!location)  { setError('Selecciona una ubicación en el mapa'); return }
 
     setIsSubmitting(true)
     setProgressMsg(formData.image ? 'Subiendo imagen...' : 'Guardando reporte...')
 
+    // Limpiar metadata: solo campos con valor real
+    const metaClean = Object.fromEntries(
+      Object.entries(formData.infraMetadata)
+        .filter(([, v]) => v !== '' && v !== false && v != null)
+    )
+
+    const payload = {
+      ...formData,
+      location,
+      ...(infraType && Object.keys(metaClean).length > 0
+        ? { metadata: metaClean }
+        : {}),
+    }
+
     try {
-      await onSubmit?.({ ...formData, location }, (msg) => setProgressMsg(msg))
+      await onSubmit?.(payload, (msg) => setProgressMsg(msg))
       setFormData({
-        description: '',
-        category:    CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
-        image:       null,
-        subtypes:    [],
+        description:   '',
+        category:      CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
+        image:         null,
+        subtypes:      [],
+        infraMetadata: {},
       })
     } catch (err) {
       setError(err.message)
@@ -135,7 +183,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Mensaje de progreso */}
+      {/* Progreso */}
       {isSubmitting && progressMsg && (
         <div className="progress-message">
           <span className="progress-spinner" />
@@ -143,7 +191,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       )}
 
-      {/* Aviso de reporte cercano */}
+      {/* Reporte cercano */}
       {nearbyReport && !isSubmitting && (
         <div className="nearby-report-warning">
           <p className="nearby-report-title">
@@ -202,7 +250,10 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
       {/* Subtypes */}
       {hasSubtypes && (
         <div className="form-group">
-          <label>Materiales aceptados <span className="optional">(opcional)</span></label>
+          <label>
+            {subtypeLabel}{' '}
+            <span className="optional">(opcional)</span>
+          </label>
           <div className="subtype-grid">
             {selectedCat.subtypes.map((sub) => {
               const active = formData.subtypes.includes(sub.id)
@@ -211,7 +262,9 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
                   key={sub.id}
                   type="button"
                   className={`subtype-chip${active ? ' active' : ''}`}
-                  style={active ? { borderColor: selectedCat.color, backgroundColor: selectedCat.color + '18', color: selectedCat.mapColor } : {}}
+                  style={active
+                    ? { borderColor: selectedCat.color, backgroundColor: selectedCat.color + '18', color: selectedCat.mapColor }
+                    : {}}
                   onClick={() => toggleSubtype(sub.id)}
                 >
                   {sub.icon} {sub.label}
@@ -220,6 +273,32 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
             })}
           </div>
         </div>
+      )}
+
+      {/* Campos extra por categoría de infraestructura */}
+      {infraType === 'pole'     && (
+        <PoleReportFields
+          values={formData.infraMetadata}
+          onChange={handleInfraMetadata}
+        />
+      )}
+      {infraType === 'water'    && (
+        <WaterReportFields
+          values={formData.infraMetadata}
+          onChange={handleInfraMetadata}
+        />
+      )}
+      {infraType === 'pipeline' && (
+        <PipelineReportFields
+          values={formData.infraMetadata}
+          onChange={handleInfraMetadata}
+        />
+      )}
+      {infraType === 'road'     && (
+        <RoadReportFields
+          values={formData.infraMetadata}
+          onChange={handleInfraMetadata}
+        />
       )}
 
       {/* Descripción */}
@@ -233,7 +312,8 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
           placeholder="Describe la situación con al menos 10 caracteres..."
           rows={4}
         />
-        <small className="desc-counter"
+        <small
+          className="desc-counter"
           style={{ color: formData.description.trim().length < 10 ? '#e74c3c' : '#27ae60' }}
         >
           {formData.description.trim().length} / 10 caracteres mínimo
@@ -291,7 +371,12 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
       {/* Acciones */}
       <div className="form-actions">
         {onCancel && (
-          <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="cancel-btn"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Cancelar
           </button>
         )}

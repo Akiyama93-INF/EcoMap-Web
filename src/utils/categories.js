@@ -1,10 +1,9 @@
-// utils/categories.js — Fase 3
+// utils/categories.js — Fase 4 + Infraestructura urbana
 // Añadido:
-//   - applyPrivacy: true/false por categoría
-//   - subtypes: materiales aceptados para Punto ecológico
-//   - getCategoryByType()
-// Actualizado:
-//   - CONTAMINATED_RIVER: nueva categoría para ríos contaminados
+//   - DAMAGED_POLE:      Poste de luz dañado
+//   - PUBLIC_TAP:        Chorro público dañado
+//   - DAMAGED_PIPELINE:  Tubería dañada
+//   - ROAD_OBSTRUCTION:  Obstrucción vial
 
 export const CATEGORIES = {
   CLANDESTINE_DUMP: {
@@ -61,6 +60,77 @@ export const CATEGORIES = {
       { id: 'quimico', label: 'Químicos / espuma',  icon: '⚗️' },
       { id: 'aguas',   label: 'Aguas negras',       icon: '🚫' },
       { id: 'color',   label: 'Color anormal',      icon: '🎨' },
+    ],
+  },
+  DAMAGED_POLE: {
+    id: 'poste_luz',
+    name: 'Poste de luz dañado',
+    icon: '💡',
+    color: '#F59E0B',
+    mapColor: '#D97706',
+    reportType: 'infrastructure',
+    description: 'Poste de alumbrado público que no funciona o representa un peligro',
+    applyPrivacy: false,
+    subtypes: [
+      { id: 'lampara_apagada',  label: 'Lámpara apagada',        icon: '🔦' },
+      { id: 'parpadeo',         label: 'Parpadeo intermitente',   icon: '⚡' },
+      { id: 'poste_caido',      label: 'Poste caído / inclinado', icon: '🚧' },
+      { id: 'cables_expuestos', label: 'Cables expuestos',        icon: '⛔' },
+      { id: 'sin_lampara',      label: 'Sin lámpara (vandalismo)',icon: '🪝' },
+      { id: 'otro',             label: 'Otro',                    icon: '❓' },
+    ],
+  },
+  PUBLIC_TAP: {
+    id: 'chorro_publico',
+    name: 'Chorro público dañado',
+    icon: '🚰',
+    color: '#3B82F6',
+    mapColor: '#2563EB',
+    reportType: 'water',
+    description: 'Chorro o fuente de agua pública que no funciona o presenta daños',
+    applyPrivacy: false,
+    subtypes: [
+      { id: 'fuga_constante', label: 'Fuga constante',            icon: '💧' },
+      { id: 'bloqueado',      label: 'Bloqueado / sin acceso',    icon: '🔒' },
+      { id: 'grifo_roto',     label: 'Grifo roto o vandalizado',  icon: '🪛' },
+      { id: 'sin_presion',    label: 'Sin presión de agua',       icon: '🚫' },
+      { id: 'otro',           label: 'Otro',                      icon: '❓' },
+    ],
+  },
+  DAMAGED_PIPELINE: {
+    id: 'tuberia_danada',
+    name: 'Tubería dañada',
+    icon: '🔧',
+    color: '#06B6D4',
+    mapColor: '#0891B2',
+    reportType: 'pipeline',
+    description: 'Tubería rota, con fuga o que causa daños en la vía pública',
+    applyPrivacy: false,
+    subtypes: [
+      { id: 'fuga_subterranea', label: 'Fuga subterránea',          icon: '💦' },
+      { id: 'rotura_derrame',   label: 'Rotura con derrame visible', icon: '🌊' },
+      { id: 'tuberia_expuesta', label: 'Tubería expuesta',           icon: '🏗️' },
+      { id: 'hundimiento',      label: 'Hundimiento de calle',       icon: '⚠️' },
+      { id: 'otro',             label: 'Otro',                       icon: '❓' },
+    ],
+  },
+  ROAD_OBSTRUCTION: {
+    id: 'obstruccion_vial',
+    name: 'Obstrucción vial',
+    icon: '🚧',
+    color: '#EF4444',
+    mapColor: '#DC2626',
+    reportType: 'road',
+    description: 'Objeto, material o situación que obstruye la vía pública',
+    applyPrivacy: false,
+    subtypes: [
+      { id: 'llanta',       label: 'Llanta(s) abandonadas',   icon: '🛞' },
+      { id: 'escombros',    label: 'Escombros / piedras',     icon: '🪨' },
+      { id: 'arbol_caido',  label: 'Árbol caído',             icon: '🌳' },
+      { id: 'vehiculo',     label: 'Vehículo abandonado',     icon: '🚗' },
+      { id: 'construccion', label: 'Material de construcción',icon: '🏗️' },
+      { id: 'bache',        label: 'Hoyo / bache grave',      icon: '🕳️' },
+      { id: 'otro',         label: 'Otro',                    icon: '❓' },
     ],
   },
 }

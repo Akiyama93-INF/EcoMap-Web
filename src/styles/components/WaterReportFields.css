@@ -1,0 +1,171 @@
+/* WaterReportFields.css — nuevo en Fase 4 (Chorro público dañado) */
+
+.water-fields {
+  background-color: #eff6ff;
+  border: 1.5px solid #3B82F6;
+  border-left: 4px solid #3B82F6;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .water-fields {
+  background-color: #0a1628;
+  border-color: #2563EB;
+  border-left-color: #2563EB;
+}
+
+.water-fields-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.water-fields-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.water-fields-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e3a8a;
+  margin: 0;
+}
+
+[data-theme="dark"] .water-fields-title {
+  color: #93C5FD;
+}
+
+.water-fields-subtitle {
+  font-size: 0.78rem;
+  color: #1d4ed8;
+  margin: 0.1rem 0 0;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .water-fields-subtitle {
+  color: #60A5FA;
+}
+
+.water-field-group {
+  margin-bottom: 0.9rem;
+}
+
+.water-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.water-field-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--text-color);
+}
+
+.water-optional {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.water-field-group select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.water-field-group select:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.water-area-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.water-area-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--text-color);
+  background-color: var(--white);
+  transition: border-color 0.15s, background-color 0.15s;
+  font-weight: 400;
+}
+
+.water-area-option input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: #3B82F6;
+}
+
+.water-area-option:hover {
+  background-color: #dbeafe;
+  border-color: #3B82F6;
+}
+
+[data-theme="dark"] .water-area-option:hover {
+  background-color: #0f1f3d;
+}
+
+.water-area-option.selected {
+  border-color: #3B82F6;
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .water-area-option.selected {
+  background-color: #0f1f3d;
+  color: #93C5FD;
+}
+
+.water-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.water-checkbox-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+  font-size: 0.88rem;
+  font-weight: 400 !important;
+  color: var(--text-color);
+}
+
+.water-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: #3B82F6;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}

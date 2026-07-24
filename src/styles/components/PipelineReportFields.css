@@ -1,0 +1,196 @@
+/* PipelineReportFields.css — nuevo en Fase 4 (Tubería dañada) */
+
+.pipeline-fields {
+  background-color: #ecfeff;
+  border: 1.5px solid #06B6D4;
+  border-left: 4px solid #06B6D4;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .pipeline-fields {
+  background-color: #021f26;
+  border-color: #0891B2;
+  border-left-color: #0891B2;
+}
+
+.pipeline-fields-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.pipeline-fields-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pipeline-fields-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #164e63;
+  margin: 0;
+}
+
+[data-theme="dark"] .pipeline-fields-title {
+  color: #67E8F9;
+}
+
+.pipeline-fields-subtitle {
+  font-size: 0.78rem;
+  color: #0e7490;
+  margin: 0.1rem 0 0;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .pipeline-fields-subtitle {
+  color: #22D3EE;
+}
+
+.pipeline-field-group {
+  margin-bottom: 0.9rem;
+}
+
+.pipeline-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.pipeline-field-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--text-color);
+}
+
+.pipeline-optional {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.pipeline-field-group select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pipeline-field-group select:focus {
+  outline: none;
+  border-color: #06B6D4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+/* Severidad con colores semánticos */
+.pipeline-severity-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pipeline-severity-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  background-color: var(--white);
+  color: var(--text-color);
+  transition: border-color 0.15s, background-color 0.15s;
+  font-weight: 400;
+}
+
+.pipeline-severity-option input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: #06B6D4;
+}
+
+.pipeline-severity-option:hover {
+  background-color: #cffafe;
+  border-color: #06B6D4;
+}
+
+[data-theme="dark"] .pipeline-severity-option:hover {
+  background-color: #042f3a;
+}
+
+.pipeline-severity-option.selected.pipeline-severity-leve {
+  border-color: #22c55e;
+  background-color: #dcfce7;
+  color: #14532d;
+  font-weight: 600;
+}
+
+.pipeline-severity-option.selected.pipeline-severity-moderado {
+  border-color: #f59e0b;
+  background-color: #fef3c7;
+  color: #78350f;
+  font-weight: 600;
+}
+
+.pipeline-severity-option.selected.pipeline-severity-grave {
+  border-color: #ef4444;
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .pipeline-severity-option.selected.pipeline-severity-leve {
+  background-color: #052e16;
+  color: #86efac;
+}
+
+[data-theme="dark"] .pipeline-severity-option.selected.pipeline-severity-moderado {
+  background-color: #1f1a0a;
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .pipeline-severity-option.selected.pipeline-severity-grave {
+  background-color: #2a0a0a;
+  color: #fca5a5;
+}
+
+.pipeline-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pipeline-checkbox-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+  font-size: 0.88rem;
+  font-weight: 400 !important;
+  color: var(--text-color);
+}
+
+.pipeline-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: #06B6D4;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}

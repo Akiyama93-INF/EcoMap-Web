@@ -1,0 +1,159 @@
+/* RoadReportFields.css — nuevo en Fase 4 (Obstrucción vial) */
+
+.road-fields {
+  background-color: #fef2f2;
+  border: 1.5px solid #EF4444;
+  border-left: 4px solid #EF4444;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .road-fields {
+  background-color: #1f0a0a;
+  border-color: #DC2626;
+  border-left-color: #DC2626;
+}
+
+.road-fields-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.road-fields-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.road-fields-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #7f1d1d;
+  margin: 0;
+}
+
+[data-theme="dark"] .road-fields-title {
+  color: #FCA5A5;
+}
+
+.road-fields-subtitle {
+  font-size: 0.78rem;
+  color: #b91c1c;
+  margin: 0.1rem 0 0;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .road-fields-subtitle {
+  color: #F87171;
+}
+
+.road-field-group {
+  margin-bottom: 0.9rem;
+}
+
+.road-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.road-field-group label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--text-color);
+}
+
+.road-optional {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.road-option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.road-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--text-color);
+  background-color: var(--white);
+  transition: border-color 0.15s, background-color 0.15s;
+  font-weight: 400;
+}
+
+.road-option input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  accent-color: #EF4444;
+}
+
+.road-option:hover {
+  background-color: #fee2e2;
+  border-color: #EF4444;
+}
+
+[data-theme="dark"] .road-option:hover {
+  background-color: #2a0a0a;
+}
+
+.road-option.selected {
+  border-color: #EF4444;
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .road-option.selected {
+  background-color: #2a0a0a;
+  color: #FCA5A5;
+}
+
+/* Tamaño con ancho visual creciente */
+.road-size-pequeno { min-width: 80px;  }
+.road-size-mediano { min-width: 90px;  }
+.road-size-grande  { min-width: 100px; }
+
+.road-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.road-checkbox-label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+  font-size: 0.88rem;
+  font-weight: 400 !important;
+  color: var(--text-color);
+}
+
+.road-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: #EF4444;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
