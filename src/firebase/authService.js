@@ -8,10 +8,10 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
+  updateProfile,
 } from 'firebase/auth'
 import { auth } from './firebaseInit'
-
-// TODO: Implementar lógica completa de autenticación
+import { saveProfile } from './profileService'
 
 export const authService = {
   // Registro con email y contraseña
@@ -21,6 +21,15 @@ export const authService = {
       return userCredential.user
     } catch (error) {
       throw new Error(`Error en registro: ${error.message}`)
+    }
+  },
+
+  // Actualiza displayName en Firebase Auth
+  async updateUserProfile(displayName) {
+    try {
+      await updateProfile(auth.currentUser, { displayName })
+    } catch (error) {
+      throw new Error(`Error actualizando perfil: ${error.message}`)
     }
   },
 
@@ -43,13 +52,19 @@ export const authService = {
     }
   },
 
-  // Login con Google
+  // Login con Google — guarda datos en Firestore tras el popup
   async loginWithGoogle() {
     try {
       const provider = new GoogleAuthProvider()
       const userCredential = await signInWithPopup(auth, provider)
-      return userCredential.user
-      // TODO: Implementar lógica adicional para guardar datos del usuario en Firestore
+      const { user } = userCredential
+
+      await saveProfile(user.uid, {
+        displayName: user.displayName ?? '',
+        email:       user.email,
+      })
+
+      return user
     } catch (error) {
       throw new Error(`Error en login con Google: ${error.message}`)
     }

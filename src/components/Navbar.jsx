@@ -1,14 +1,15 @@
-// Navbar — Fase 2
-// Reemplaza el emoji por el logo oficial del proyecto
+// Navbar — Fase 3
+// Muestra displayName en lugar de email, avatar con inicial, enlace a /perfil
 
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import authService from '../firebase/authService'
-import useTheme from '../hooks/useTheme'
+import useTheme    from '../hooks/useTheme'
+import UserAvatar  from './UserAvatar'
 import '../styles/components/Navbar.css'
 
 function Navbar() {
-  const [user, setUser] = useState(null)
+  const [user,    setUser]    = useState(null)
   const [loading, setLoading] = useState(true)
   const { isDark, toggleTheme } = useTheme()
 
@@ -27,6 +28,9 @@ function Navbar() {
       console.error('Error al cerrar sesión:', error)
     }
   }
+
+  // Nombre a mostrar: displayName → parte del email antes del @
+  const displayName = user?.displayName || user?.email?.split('@')[0] || ''
 
   return (
     <nav className="navbar">
@@ -50,14 +54,17 @@ function Navbar() {
             <>
               {user ? (
                 <>
-                  <span className="navbar-user">{user.email}</span>
+                  <Link to="/perfil" className="navbar-user-link">
+                    <UserAvatar name={displayName} size={32} />
+                    <span className="navbar-user">{displayName}</span>
+                  </Link>
                   <button onClick={handleLogout} className="navbar-btn logout-btn">
                     Cerrar sesión
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="navbar-link">Iniciar sesión</Link>
+                  <Link to="/login"    className="navbar-link">Iniciar sesión</Link>
                   <Link to="/register" className="navbar-btn register-btn">Registrarse</Link>
                 </>
               )}

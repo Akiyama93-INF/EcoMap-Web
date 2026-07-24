@@ -92,7 +92,7 @@ function Home() {
 
       await firestoreService.createReport({
         userId:      user.uid,
-        userName:    user.email,
+        userName: user.displayName ?? user.email,
         category:    formData.category,
         reportType:  cat?.reportType ?? 'citizen',
         subtypes:    formData.subtypes ?? [],

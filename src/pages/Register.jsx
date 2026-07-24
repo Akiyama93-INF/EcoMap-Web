@@ -1,16 +1,18 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import authService from '../firebase/authService'
+import { saveProfile } from '../firebase/profileService'
 import '../styles/pages/Register.css'
 
 function Register() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    displayName:     '',
+    email:           '',
+    password:        '',
     confirmPassword: '',
   })
-  const [error, setError]         = useState(null)
+  const [error,     setError]     = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleInputChange = (e) => {
@@ -23,8 +25,11 @@ function Register() {
     setError(null)
     setIsLoading(true)
     try {
-      if (!formData.email || !formData.password || !formData.confirmPassword) {
+      if (!formData.displayName || !formData.email || !formData.password || !formData.confirmPassword) {
         throw new Error('Todos los campos son requeridos')
+      }
+      if (formData.displayName.trim().length < 2) {
+        throw new Error('El nombre debe tener al menos 2 caracteres')
       }
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Las contraseñas no coinciden')
@@ -32,7 +37,16 @@ function Register() {
       if (formData.password.length < 6) {
         throw new Error('La contraseña debe tener al menos 6 caracteres')
       }
-      await authService.register(formData.email, formData.password)
+
+      const user = await authService.register(formData.email, formData.password)
+
+      // Guarda nombre en Firebase Auth y Firestore
+      await authService.updateUserProfile(formData.displayName.trim())
+      await saveProfile(user.uid, {
+        displayName: formData.displayName.trim(),
+        email:       formData.email,
+      })
+
       navigate('/')
     } catch (err) {
       setError(err.message)
@@ -62,6 +76,21 @@ function Register() {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
+
+          {/* Campo nuevo: nombre */}
+          <div className="form-group">
+            <label htmlFor="displayName">Nombre</label>
+            <input
+              type="text"
+              id="displayName"
+              name="displayName"
+              value={formData.displayName}
+              onChange={handleInputChange}
+              placeholder="Tu nombre"
+              required
+            />
+          </div>
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
