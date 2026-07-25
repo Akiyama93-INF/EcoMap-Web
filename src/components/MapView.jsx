@@ -251,13 +251,7 @@ function MapView({
         })}
       </MapContainer>
 
-      {clickedLocation && (
-        <div className="map-info">
-          <p>Ubicación seleccionada</p>
-          <p>Lat: {clickedLocation.lat.toFixed(6)}</p>
-          <p>Lng: {clickedLocation.lng.toFixed(6)}</p>
-        </div>
-      )}
+
     </div>
   )
 }

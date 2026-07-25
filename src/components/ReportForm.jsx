@@ -1,10 +1,10 @@
-// ReportForm — Fase 4 + Infraestructura urbana
+// ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
 // Añadido:
-//   - Importación de WaterReportFields, PipelineReportFields, RoadReportFields
-//   - Secciones condicionales para chorro_publico, tuberia_danada, obstruccion_vial
-//   - metadata se construye limpio antes del submit (sin campos vacíos)
+//   - Dos botones de imagen: "Tomar foto" (capture=environment) y "Elegir de galería"
+//   - capture="environment" abre la cámara trasera nativa en Android/Capacitor
+//     sin necesitar @capacitor/camera — funciona vía la Web API estándar
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
 import PoleReportFields     from './PoleReportFields'
 import WaterReportFields    from './WaterReportFields'
@@ -35,7 +35,6 @@ function validateDescription(desc) {
   return null
 }
 
-// IDs de categorías que tienen campos extra opcionales
 const INFRA_FIELDS = {
   poste_luz:        'pole',
   chorro_publico:   'water',
@@ -43,7 +42,6 @@ const INFRA_FIELDS = {
   obstruccion_vial: 'road',
 }
 
-// Label del bloque de subtypes según categoría
 const SUBTYPE_LABELS = {
   poste_luz:        'Tipo de fallo',
   chorro_publico:   'Tipo de daño',
@@ -64,13 +62,17 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const [error,        setError]        = useState(null)
   const [nearbyReport, setNearbyReport] = useState(null)
 
+  // Refs para los dos inputs de imagen ocultos
+  const cameraInputRef  = useRef(null)
+  const galleryInputRef = useRef(null)
+
   const MAX_IMAGE_SIZE      = 5 * 1024 * 1024
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
-  const selectedCat   = getCategoryByName(formData.category) ?? CATEGORIES_ARRAY[0]
-  const hasSubtypes   = (selectedCat?.subtypes?.length ?? 0) > 0
-  const infraType     = INFRA_FIELDS[selectedCat?.id] ?? null
-  const subtypeLabel  = SUBTYPE_LABELS[selectedCat?.id] ?? 'Materiales aceptados'
+  const selectedCat  = getCategoryByName(formData.category) ?? CATEGORIES_ARRAY[0]
+  const hasSubtypes  = (selectedCat?.subtypes?.length ?? 0) > 0
+  const infraType    = INFRA_FIELDS[selectedCat?.id] ?? null
+  const subtypeLabel = SUBTYPE_LABELS[selectedCat?.id] ?? 'Materiales aceptados'
 
   useEffect(() => {
     if (!location || markers.length === 0) { setNearbyReport(null); return }
@@ -94,21 +96,30 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     setFormData((p) => ({ ...p, [name]: value }))
   }
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
+  // Validación compartida para cámara y galería
+  const handleImageFile = (file) => {
     if (!file) return
     setError(null)
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setError('Solo se permiten imágenes JPG, PNG o WEBP.')
-      e.target.value = ''
       return
     }
     if (file.size > MAX_IMAGE_SIZE) {
       setError('La imagen no puede superar los 5 MB.')
-      e.target.value = ''
       return
     }
     setFormData((prev) => ({ ...prev, image: file }))
+  }
+
+  const handleCameraChange  = (e) => handleImageFile(e.target.files[0])
+  const handleGalleryChange = (e) => handleImageFile(e.target.files[0])
+
+  const removeImage = () => {
+    setFormData((p) => ({ ...p, image: null }))
+    // Limpiar los inputs para que onChange vuelva a dispararse si el usuario
+    // selecciona el mismo archivo
+    if (cameraInputRef.current)  cameraInputRef.current.value  = ''
+    if (galleryInputRef.current) galleryInputRef.current.value = ''
   }
 
   const toggleSubtype = (id) => {
@@ -138,7 +149,6 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     setIsSubmitting(true)
     setProgressMsg(formData.image ? 'Subiendo imagen...' : 'Guardando reporte...')
 
-    // Limpiar metadata: solo campos con valor real
     const metaClean = Object.fromEntries(
       Object.entries(formData.infraMetadata)
         .filter(([, v]) => v !== '' && v !== false && v != null)
@@ -277,28 +287,16 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
       {/* Campos extra por categoría de infraestructura */}
       {infraType === 'pole'     && (
-        <PoleReportFields
-          values={formData.infraMetadata}
-          onChange={handleInfraMetadata}
-        />
+        <PoleReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />
       )}
       {infraType === 'water'    && (
-        <WaterReportFields
-          values={formData.infraMetadata}
-          onChange={handleInfraMetadata}
-        />
+        <WaterReportFields    values={formData.infraMetadata} onChange={handleInfraMetadata} />
       )}
       {infraType === 'pipeline' && (
-        <PipelineReportFields
-          values={formData.infraMetadata}
-          onChange={handleInfraMetadata}
-        />
+        <PipelineReportFields values={formData.infraMetadata} onChange={handleInfraMetadata} />
       )}
       {infraType === 'road'     && (
-        <RoadReportFields
-          values={formData.infraMetadata}
-          onChange={handleInfraMetadata}
-        />
+        <RoadReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />
       )}
 
       {/* Descripción */}
@@ -320,23 +318,14 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </small>
       </div>
 
-      {/* Fotografía */}
+      {/* ── Fotografía ─────────────────────────────────────────────────────── */}
       <div className="form-group">
-        <label htmlFor="image">
-          Fotografía <span className="optional">(opcional)</span>
-          <br />
-          <small className="image-help">
-            Formatos permitidos: JPG, PNG y WEBP • Máximo 5 MB
-          </small>
+        <label>
+          Fotografía <span className="optional">(Requerido)</span>
         </label>
-        <input
-          type="file"
-          id="image"
-          name="image"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleImageChange}
-        />
-        {formData.image && (
+
+        {/* Preview — se muestra solo cuando hay imagen seleccionada */}
+        {formData.image ? (
           <div className="image-preview-container">
             <div className="image-preview-wrapper">
               <img
@@ -345,9 +334,66 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
                 className="image-preview"
               />
             </div>
-            <p className="file-name">📎 {formData.image.name}</p>
+            <div className="image-preview-footer">
+              <p className="file-name">📎 {formData.image.name}</p>
+              <button
+                type="button"
+                className="image-remove-btn"
+                onClick={removeImage}
+                aria-label="Eliminar imagen"
+              >
+                ✕ Quitar
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Botones de captura — visibles solo cuando NO hay imagen */
+          <div className="image-capture-row">
+
+            {/* Tomar foto con la cámara */}
+            <button
+              type="button"
+              className="image-capture-btn image-capture-btn--camera"
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              📷 Tomar foto
+            </button>
+
+            {/* Elegir desde galería */}
+            <button
+              type="button"
+              className="image-capture-btn image-capture-btn--gallery"
+              onClick={() => galleryInputRef.current?.click()}
+            >
+              🖼 Galería
+            </button>
+
+            {/* Inputs ocultos */}
+            {/* capture="environment" → cámara trasera nativa en Android */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              onChange={handleCameraChange}
+              className="image-input-hidden"
+              aria-hidden="true"
+            />
+            {/* Sin capture → abre el selector de archivos / galería */}
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleGalleryChange}
+              className="image-input-hidden"
+              aria-hidden="true"
+            />
           </div>
         )}
+
+        <small className="image-help">
+          JPG · PNG · WEBP · Máx. 5 MB
+        </small>
       </div>
 
       {/* Ubicación */}

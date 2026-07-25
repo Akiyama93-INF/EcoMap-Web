@@ -379,3 +379,76 @@
   font-size: 0.78rem;
   transition: color 0.2s;
 }
+
+/* ── Botones de cámara / galería ─────────────────────────────── */
+.image-input-hidden {
+  display: none;
+}
+
+.image-capture-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.image-capture-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  border: 2px solid transparent;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.image-capture-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.image-capture-btn--camera {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+}
+
+.image-capture-btn--gallery {
+  background-color: transparent;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Footer de preview */
+.image-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.image-remove-btn {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger-color);
+  background: transparent;
+  border: 1px solid var(--danger-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.image-remove-btn:hover {
+  background: var(--danger-color);
+  color: #ffffff;
+}
