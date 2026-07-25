@@ -1,4 +1,4 @@
-#EcoMap — Mapa Ecológico de El Salvador
+# EcoMap — Mapa Ecológico de El Salvador
 
 **EcoMap** es una plataforma web progresiva que permite a ciudadanos reportar, visualizar y gestionar puntos ambientales críticos en El Salvador mediante un mapa interactivo en tiempo real.
 
