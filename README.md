@@ -1,4 +1,4 @@
-# EcoMap — Mapa Ecológico de El Salvador
+# 🌎 EcoMap — Mapa Ecológico de El Salvador
 
 **EcoMap** es una plataforma web progresiva y aplicación Android que permite a ciudadanos reportar, visualizar y gestionar puntos ambientales críticos en El Salvador mediante un mapa interactivo en tiempo real.
 
@@ -276,19 +276,6 @@ android/app/build/outputs/apk/release/app-release.apk
 - `ACCESS_FINE_LOCATION` — geolocalización precisa
 - `ACCESS_COARSE_LOCATION` — geolocalización aproximada
 - `INTERNET` — Firebase y Cloudinary
-
----
-
-## 🛣️ Futuras mejoras
-
-- 🛡️ Roles administrativos para moderación
-- 📊 Estadísticas ambientales por zona y categoría
-- 🔔 Push notifications con Firebase Cloud Messaging
-- 💬 Comentarios en reportes
-- 🗺️ Mapa de calor de zonas críticas
-- 📈 Dashboard de análisis para instituciones
-- 🔎 Filtros avanzados en el mapa
-- 🌐 Soporte multilenguaje
 
 ---
 
