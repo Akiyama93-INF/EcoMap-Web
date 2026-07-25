@@ -1,5 +1,16 @@
 {
   "appId": "sv.ecomap.app",
   "appName": "EcoMap",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#1a1d23",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    }
+  }
 }
