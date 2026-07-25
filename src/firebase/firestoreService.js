@@ -1,11 +1,10 @@
-// firebase/firestoreService.js — Fase 3
+// firebase/firestoreService.js — Fase 4 (patch username)
 // Añadido:
-//   - confirmReport(): votos colaborativos (arrayUnion, un voto por userId)
-//   - createReport(): guarda reportType explícito para que privacy.js no
-//     necesite inferirlo en cada render
-// Actualizado:
-//   - markAsClean(): marca un basurero clandestino como limpio/resuelto
-//   - subscribeToReports(): listener en tiempo real con onSnapshot (modo offline)
+//   - resolveUserName(): lee users/{uid} en Firestore para obtener displayName
+//   - enrichReports(): enriquece el array de reportes con el nombre real del autor
+//     sin modificar Firestore (compatibilidad con reportes viejos que tienen email)
+// Sin cambios:
+//   - Toda la lógica de CRUD, confirmaciones y estados permanece igual
 
 import {
   collection,
@@ -24,6 +23,43 @@ import {
 import { db } from './firebaseInit'
 
 const REPORTS_COLLECTION = 'reports'
+const USERS_COLLECTION   = 'users'
+
+// Cache en memoria para no hacer múltiples lecturas al mismo uid en la sesión
+const _nameCache = {}
+
+async function resolveUserName(uid, fallback) {
+  if (!uid) return fallback ?? 'Anónimo'
+  if (_nameCache[uid]) return _nameCache[uid]
+
+  try {
+    const snap = await getDoc(doc(db, USERS_COLLECTION, uid))
+    const name = snap.exists() ? (snap.data().displayName || fallback) : fallback
+    _nameCache[uid] = name ?? 'Anónimo'
+    return _nameCache[uid]
+  } catch {
+    return fallback ?? 'Anónimo'
+  }
+}
+
+// Dado un array de reportes crudos, resuelve el displayName real de cada autor.
+// Si userName ya parece un nombre (no contiene @) se usa directamente sin hit a Firestore.
+async function enrichReports(rawReports) {
+  const uidSet = new Set()
+  rawReports.forEach((r) => {
+    if (r.userId && r.userName?.includes('@')) uidSet.add(r.userId)
+  })
+
+  // Resuelve en paralelo solo los uid que necesitan lookup
+  await Promise.all([...uidSet].map((uid) => resolveUserName(uid, null)))
+
+  return rawReports.map((r) => {
+    // Si el userName guardado ya es un nombre limpio, lo respeta
+    if (!r.userName?.includes('@')) return r
+    // Si era un email, sustituye con el nombre resuelto (puede ser el mismo email si no hay perfil)
+    return { ...r, userName: _nameCache[r.userId] ?? r.userName }
+  })
+}
 
 export const firestoreService = {
   // Crear nuevo reporte
@@ -43,25 +79,26 @@ export const firestoreService = {
     }
   },
 
-  // Obtener todos los reportes (lectura puntual — se mantiene para usos puntuales)
+  // Obtener todos los reportes (lectura puntual) con nombres resueltos
   async getReports() {
     try {
       const snapshot = await getDocs(collection(db, REPORTS_COLLECTION))
-      return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      const raw = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      return enrichReports(raw)
     } catch (error) {
       throw new Error(`Error al obtener reportes: ${error.message}`)
     }
   },
 
-  // ← Listener en tiempo real: actualiza automáticamente online y offline
-  // Devuelve la función de cancelación (unsubscribe) — llamarla al desmontar
+  // Listener en tiempo real con nombres resueltos
   subscribeToReports(onData, onError) {
     const q = collection(db, REPORTS_COLLECTION)
     return onSnapshot(
       q,
-      (snapshot) => {
-        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
-        onData(data)
+      async (snapshot) => {
+        const raw = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+        const enriched = await enrichReports(raw)
+        onData(enriched)
       },
       (err) => {
         console.error('subscribeToReports error:', err)
@@ -70,18 +107,20 @@ export const firestoreService = {
     )
   },
 
-  // Obtener reporte por ID
+  // Obtener reporte por ID con nombre resuelto
   async getReportById(reportId) {
     try {
       const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
       if (!snap.exists()) throw new Error('Reporte no encontrado')
-      return { id: snap.id, ...snap.data() }
+      const raw = { id: snap.id, ...snap.data() }
+      const [enriched] = await enrichReports([raw])
+      return enriched
     } catch (error) {
       throw new Error(`Error al obtener reporte: ${error.message}`)
     }
   },
 
-  // Obtener reportes por usuario
+  // Obtener reportes por usuario con nombres resueltos
   async getReportsByUser(userId) {
     try {
       const q = query(
@@ -89,7 +128,8 @@ export const firestoreService = {
         where('userId', '==', userId)
       )
       const snapshot = await getDocs(q)
-      return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      const raw = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      return enrichReports(raw)
     } catch (error) {
       throw new Error(`Error al obtener reportes del usuario: ${error.message}`)
     }

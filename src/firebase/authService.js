@@ -25,9 +25,13 @@ export const authService = {
   },
 
   // Actualiza displayName en Firebase Auth
-  async updateUserProfile(displayName) {
+  async updateUserProfile(displayName, photoURL = null) {
     try {
-      await updateProfile(auth.currentUser, { displayName })
+      const update = {
+        displayName,
+        ...(photoURL && { photoURL }),
+      }
+      await updateProfile(auth.currentUser, update)
     } catch (error) {
       throw new Error(`Error actualizando perfil: ${error.message}`)
     }

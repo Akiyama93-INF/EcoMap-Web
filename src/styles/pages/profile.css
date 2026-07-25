@@ -6,9 +6,9 @@
 }
 
 .profile-card {
-  background: var(--card-bg, #fff);
+  background: var(--white);
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   padding: 2rem;
   width: 100%;
   max-width: 480px;
@@ -17,27 +17,110 @@
   gap: 1.5rem;
 }
 
+/* ── Avatar / foto ─────────────────────────────────────────────────────────── */
 .profile-avatar-row {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.profile-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-primary, #1a1a1a);
+.profile-photo-wrapper {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
 }
 
-/* Estadísticas */
+.profile-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+  display: block;
+}
+
+/* Botón de cámara superpuesto */
+.profile-photo-edit-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  border: 2px solid var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: opacity 0.2s;
+  box-shadow: none; /* override global button:hover */
+}
+
+.profile-photo-edit-btn:hover {
+  opacity: 0.85;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Input de archivo oculto */
+.profile-photo-input {
+  display: none;
+}
+
+.profile-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.profile-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.2;
+}
+
+.profile-email-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+
+/* ── Confirmación de foto nueva ────────────────────────────────────────────── */
+.profile-photo-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--border-radius);
+  padding: 0.6rem 0.9rem;
+}
+
+.profile-photo-filename {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--info-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── Estadísticas ──────────────────────────────────────────────────────────── */
 .profile-stats {
   display: flex;
   gap: 1rem;
 }
 
 .profile-stat {
-  background: var(--color-primary-light, #e8f5e9);
+  background: var(--success-bg);
   border-radius: 8px;
   padding: 0.75rem 1.25rem;
   display: flex;
@@ -49,16 +132,16 @@
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--color-primary, #2e7d32);
+  color: var(--primary-color);
 }
 
 .stat-label {
   font-size: 0.8rem;
-  color: var(--text-secondary, #555);
+  color: var(--text-light);
   margin-top: 0.2rem;
 }
 
-/* Formulario */
+/* ── Formulario ────────────────────────────────────────────────────────────── */
 .profile-form {
   display: flex;
   flex-direction: column;
@@ -74,31 +157,33 @@
 .form-group label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--text-color);
 }
 
 .form-group input {
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--border-color, #ccc);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 0.95rem;
-  background: var(--input-bg, #fff);
-  color: var(--text-primary, #1a1a1a);
+  background: var(--input-bg);
+  color: var(--text-color);
 }
 
 .input-disabled {
-  background: var(--input-disabled-bg, #f0f0f0) !important;
+  background: var(--hover-bg) !important;
   cursor: not-allowed;
-  color: var(--text-secondary, #777) !important;
+  color: var(--text-light) !important;
 }
 
-.profile-error   { color: #c62828; font-size: 0.9rem; }
-.profile-success { color: #2e7d32; font-size: 0.9rem; }
-.profile-loading { text-align: center; padding: 2rem; }
+/* ── Mensajes ──────────────────────────────────────────────────────────────── */
+.profile-error   { color: var(--danger-color);   font-size: 0.9rem; margin: 0; }
+.profile-success { color: var(--primary-color);  font-size: 0.9rem; margin: 0; }
+.profile-loading { text-align: center; padding: 2rem; color: var(--text-color); }
 
+/* ── Botones ───────────────────────────────────────────────────────────────── */
 .submit-btn {
   padding: 0.7rem;
-  background: var(--color-primary, #2e7d32);
+  background: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -108,5 +193,27 @@
   transition: opacity 0.2s;
 }
 
+.submit-btn--photo {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
 .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.submit-btn:hover:not(:disabled) { opacity: 0.88; }
+.submit-btn:hover:not(:disabled) { opacity: 0.88; transform: none; box-shadow: none; }
+
+.cancel-btn {
+  padding: 0.4rem 0.9rem;
+  background: var(--cancel-hover);
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.cancel-btn:hover:not(:disabled) { opacity: 0.75; transform: none; box-shadow: none; }
+.cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }

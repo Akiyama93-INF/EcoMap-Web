@@ -26,6 +26,13 @@
   --border-radius: 8px;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
+
+  /* Popup de Leaflet — modo claro */
+  --leaflet-popup-bg:      #ffffff;
+  --leaflet-popup-text:    #2c3e50;
+  --leaflet-popup-border:  #bdc3c7;
+  --leaflet-popup-shadow:  rgba(0, 0, 0, 0.15);
+  --leaflet-popup-tip:     #ffffff;
 }
 
 [data-theme="dark"] {
@@ -47,6 +54,13 @@
   --success-bg: #0f2318;
   --error-bg: #2a1015;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  /* Popup de Leaflet — modo oscuro */
+  --leaflet-popup-bg:      #242830;
+  --leaflet-popup-text:    #e8eaf0;
+  --leaflet-popup-border:  #3a3f4b;
+  --leaflet-popup-shadow:  rgba(0, 0, 0, 0.5);
+  --leaflet-popup-tip:     #242830;
 }
 
 * {
@@ -178,4 +192,54 @@ a:hover {
   border-radius: var(--border-radius);
   border-left: 4px solid var(--warning-color);
   margin-bottom: 1rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Leaflet popup — override para respetar el tema oscuro/claro
+   Leaflet inyecta sus estilos con especificidad baja, así que con .leaflet-*
+   alcanza para sobreescribir sin !important en la mayoría de casos.
+   Se usa !important solo donde Leaflet usa inline styles o reglas más específicas.
+───────────────────────────────────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  background-color: var(--leaflet-popup-bg) !important;
+  color:            var(--leaflet-popup-text) !important;
+  border:           1px solid var(--leaflet-popup-border) !important;
+  box-shadow:       0 3px 14px var(--leaflet-popup-shadow) !important;
+  border-radius:    10px !important;
+}
+
+.leaflet-popup-content {
+  color: var(--leaflet-popup-text) !important;
+  margin: 10px 14px !important;
+}
+
+/* La "cola" triangular del popup */
+.leaflet-popup-tip {
+  background-color: var(--leaflet-popup-tip) !important;
+}
+
+/* Botón de cierre (×) */
+.leaflet-popup-close-button {
+  color: var(--leaflet-popup-text) !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--primary-color) !important;
+  background: transparent !important;
+}
+
+/* Textos dentro del popup personalizado de EcoMap */
+.leaflet-popup-content h3,
+.leaflet-popup-content h4,
+.leaflet-popup-content p,
+.leaflet-popup-content span,
+.leaflet-popup-content small {
+  color: var(--leaflet-popup-text) !important;
+}
+
+/* Chips de subtipo dentro del popup */
+.leaflet-popup-content .popup-subtype-chip {
+  background-color: var(--hover-bg) !important;
+  color:            var(--leaflet-popup-text) !important;
+  border-color:     var(--leaflet-popup-border) !important;
 }
