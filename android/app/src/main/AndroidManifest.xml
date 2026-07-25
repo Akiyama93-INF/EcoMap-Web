@@ -24,22 +24,34 @@
 
         </activity>
 
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
-        </provider>
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
 
     </application>
 
     <!-- Permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-	<uses-permission android:name="android.permission.CAMERA" />
+<!-- Cámara: necesario para capture="environment" en el formulario de reportes -->
+<uses-permission android:name="android.permission.CAMERA" />
+
+<!-- Lectura de galería (Android 12 e inferior) -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" />
+
+<!-- Lectura de imágenes (Android 13+) -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+<!-- Geolocalización — ya debería estar, pero confirma -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+<!-- Internet — necesario para Firebase y Cloudinary -->
+<uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>
