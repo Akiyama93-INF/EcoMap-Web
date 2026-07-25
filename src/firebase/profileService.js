@@ -13,12 +13,11 @@ export async function getProfile(uid) {
 }
 
 // Crea o sobreescribe el perfil (merge para no borrar campos existentes)
-export async function saveProfile(uid, { displayName, email }) {
+export async function saveProfile(uid, data) {
   await setDoc(
     doc(db, col, uid),
     {
-      displayName,
-      email,
+      ...data,
       updatedAt: serverTimestamp(),
     },
     { merge: true }
@@ -30,14 +29,6 @@ export async function updateDisplayName(uid, displayName) {
   await setDoc(
     doc(db, col, uid),
     { displayName, updatedAt: serverTimestamp() },
-    { merge: true }
-  )
-}
-
-export async function saveProfile(uid, data) {
-  await setDoc(
-    doc(db, col, uid),
-    data,
     { merge: true }
   )
 }
