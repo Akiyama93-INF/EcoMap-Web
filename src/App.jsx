@@ -1,16 +1,17 @@
 // App.jsx
-// Actualizado: ThemeProvider envuelve toda la app para compartir isDark globalmente
+// Actualizado: WelcomeModal para visitantes nuevos sin cuenta
 
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
-import Navbar   from './components/Navbar'
-import Footer   from './components/Footer'
-import Home     from './pages/Home'
-import Login    from './pages/Login'
-import Register from './pages/Register'
-import Profile  from './pages/Profile'
-import NotFound from './pages/NotFound'
+import Navbar        from './components/Navbar'
+import Footer        from './components/Footer'
+import WelcomeModal  from './components/WelcomeModal'
+import Home          from './pages/Home'
+import Login         from './pages/Login'
+import Register      from './pages/Register'
+import Profile       from './pages/Profile'
+import NotFound      from './pages/NotFound'
 import './styles/App.css'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Router>
         <div className="app-container">
           <Navbar />
+          <WelcomeModal />
           <main className="main-content">
             <Routes>
               <Route path="/"         element={<Home />}     />

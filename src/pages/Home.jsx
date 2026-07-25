@@ -3,11 +3,12 @@
 //   - Validación de ubicación fuera de El Salvador
 //   - Mensajes de progreso por pasos en handleReportSubmit
 //   - onConfirmExisting para reportes duplicados
+//   - Bienvenida personalizada con nombre y conteo de reportes propios
 // Actualizado:
 //   - isDark desde useTheme pasado a MapView para tiles oscuros
 //   - isOffline desde useReports para mostrar banner sin conexión
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MapView           from '../components/MapView'
 import ReportForm        from '../components/ReportForm'
@@ -39,6 +40,14 @@ function Home() {
   const [selectedMarkerId, setSelectedMarkerId] = useState(null)
   const [openReport,       setOpenReport]       = useState(null)
   const [confirmError,     setConfirmError]     = useState(null)
+
+  // Conteo de reportes propios — calculado desde markers ya cargados
+  const myReportCount = useMemo(() => {
+    if (!user) return 0
+    return markers.filter((m) => m.userId === user.uid).length
+  }, [markers, user])
+
+  const displayName = user?.displayName || user?.email?.split('@')[0] || ''
 
   // Abrir modal de detalles desde botón del popup del mapa
   useEffect(() => {
@@ -92,7 +101,7 @@ function Home() {
 
       await firestoreService.createReport({
         userId:      user.uid,
-        userName: user.displayName ?? user.email,
+        userName:    user.displayName ?? user.email,
         category:    formData.category,
         reportType:  cat?.reportType ?? 'citizen',
         subtypes:    formData.subtypes ?? [],
@@ -137,7 +146,7 @@ function Home() {
   return (
     <div className="home">
 
-      {/* ← Banner de modo offline */}
+      {/* Banner de modo offline */}
       {isOffline && (
         <div className="offline-banner">
           Sin conexión — mostrando datos en caché. Los reportes nuevos se enviarán al reconectarse.
@@ -177,12 +186,24 @@ function Home() {
           ) : (
             <>
               <div className="welcome-section">
-                <h2>Bienvenido a EcoMap</h2>
-                <p>Haga clic en el mapa para reportar un punto ambiental en El Salvador.</p>
-                {!user && (
-                  <p className="login-prompt">
-                    <a href="/login">Inicia sesión</a> para hacer reportes
-                  </p>
+                {user ? (
+                  <>
+                    <h2>¡Hola, {displayName}!</h2>
+                    <p>Haz clic en el mapa para reportar un punto ambiental en El Salvador.</p>
+                    {myReportCount > 0 && (
+                      <p className="welcome-stats">
+                        Tienes <strong>{myReportCount}</strong> {myReportCount === 1 ? 'reporte enviado' : 'reportes enviados'}.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h2>Bienvenido a EcoMap</h2>
+                    <p>Haga clic en el mapa para reportar un punto ambiental en El Salvador.</p>
+                    <p className="login-prompt">
+                      <a href="/login">Inicia sesión</a> para hacer reportes
+                    </p>
+                  </>
                 )}
               </div>
 
@@ -198,10 +219,7 @@ function Home() {
 
       {/* Backdrop cuando formulario está abierto */}
       {showReportForm && (
-        <div
-          className="report-form-backdrop"
-          onClick={handleCancelForm}
-        />
+        <div className="report-form-backdrop" onClick={handleCancelForm} />
       )}
 
       {/* Modal de detalles */}
