@@ -33,3 +33,11 @@ export async function updateDisplayName(uid, displayName) {
     { merge: true }
   )
 }
+
+export async function saveProfile(uid, data) {
+  await setDoc(
+    doc(db, col, uid),
+    data,
+    { merge: true }
+  )
+}
