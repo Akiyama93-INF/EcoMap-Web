@@ -1,8 +1,5 @@
 // ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
-// Añadido:
-//   - Dos botones de imagen: "Tomar foto" (capture=environment) y "Elegir de galería"
-//   - capture="environment" abre la cámara trasera nativa en Android/Capacitor
-//     sin necesitar @capacitor/camera — funciona vía la Web API estándar
+// Cámara: en APK usa @capacitor/camera (nativo), en browser usa input file estándar
 
 import React, { useState, useEffect, useRef } from 'react'
 import { CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
@@ -10,6 +7,7 @@ import PoleReportFields     from './PoleReportFields'
 import WaterReportFields    from './WaterReportFields'
 import PipelineReportFields from './PipelineReportFields'
 import RoadReportFields     from './RoadReportFields'
+import { useCameraNative }  from '../hooks/useCameraNative'
 import '../styles/components/ReportForm.css'
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
@@ -62,9 +60,10 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const [error,        setError]        = useState(null)
   const [nearbyReport, setNearbyReport] = useState(null)
 
-  // Refs para los dos inputs de imagen ocultos
   const cameraInputRef  = useRef(null)
   const galleryInputRef = useRef(null)
+
+  const { takePhoto, pickFromGallery, isNative, error: camError } = useCameraNative()
 
   const MAX_IMAGE_SIZE      = 5 * 1024 * 1024
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -83,12 +82,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   }, [location, markers])
 
   const handleCategoryChange = (e) => {
-    setFormData((p) => ({
-      ...p,
-      category:      e.target.value,
-      subtypes:      [],
-      infraMetadata: {},
-    }))
+    setFormData((p) => ({ ...p, category: e.target.value, subtypes: [], infraMetadata: {} }))
   }
 
   const handleChange = (e) => {
@@ -96,8 +90,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     setFormData((p) => ({ ...p, [name]: value }))
   }
 
-  // Validación compartida para cámara y galería
-  const handleImageFile = (file) => {
+  const applyImageFile = (file) => {
     if (!file) return
     setError(null)
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -111,13 +104,35 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     setFormData((prev) => ({ ...prev, image: file }))
   }
 
-  const handleCameraChange  = (e) => handleImageFile(e.target.files[0])
-  const handleGalleryChange = (e) => handleImageFile(e.target.files[0])
+  // ── Cámara ───────────────────────────────────────────────────────────────
+  const handleCameraBtn = async () => {
+    if (isNative) {
+      // APK: usa Capacitor Camera API — abre cámara nativa directamente
+      const file = await takePhoto()
+      if (file) applyImageFile(file)
+    } else {
+      // Browser: input file con capture
+      cameraInputRef.current?.click()
+    }
+  }
+
+  // ── Galería ──────────────────────────────────────────────────────────────
+  const handleGalleryBtn = async () => {
+    if (isNative) {
+      // APK: usa Capacitor Camera API — abre selector de fotos nativo
+      const file = await pickFromGallery()
+      if (file) applyImageFile(file)
+    } else {
+      // Browser: input file normal
+      galleryInputRef.current?.click()
+    }
+  }
+
+  const handleCameraInputChange  = (e) => applyImageFile(e.target.files[0])
+  const handleGalleryInputChange = (e) => applyImageFile(e.target.files[0])
 
   const removeImage = () => {
     setFormData((p) => ({ ...p, image: null }))
-    // Limpiar los inputs para que onChange vuelva a dispararse si el usuario
-    // selecciona el mismo archivo
     if (cameraInputRef.current)  cameraInputRef.current.value  = ''
     if (galleryInputRef.current) galleryInputRef.current.value = ''
   }
@@ -132,10 +147,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   }
 
   const handleInfraMetadata = (field, value) => {
-    setFormData((p) => ({
-      ...p,
-      infraMetadata: { ...p.infraMetadata, [field]: value },
-    }))
+    setFormData((p) => ({ ...p, infraMetadata: { ...p.infraMetadata, [field]: value } }))
   }
 
   const handleSubmit = async (e) => {
@@ -157,19 +169,14 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     const payload = {
       ...formData,
       location,
-      ...(infraType && Object.keys(metaClean).length > 0
-        ? { metadata: metaClean }
-        : {}),
+      ...(infraType && Object.keys(metaClean).length > 0 ? { metadata: metaClean } : {}),
     }
 
     try {
       await onSubmit?.(payload, (msg) => setProgressMsg(msg))
       setFormData({
-        description:   '',
-        category:      CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
-        image:         null,
-        subtypes:      [],
-        infraMetadata: {},
+        description: '', category: CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
+        image: null, subtypes: [], infraMetadata: {},
       })
     } catch (err) {
       setError(err.message)
@@ -182,7 +189,6 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   return (
     <form className="report-form" onSubmit={handleSubmit}>
 
-      {/* Encabezado dinámico */}
       <div className="report-form-header" style={{ borderLeftColor: selectedCat?.color }}>
         <span className="report-form-icon">{selectedCat?.icon}</span>
         <div>
@@ -191,9 +197,8 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {(error || camError) && <div className="error-message">{error || camError}</div>}
 
-      {/* Progreso */}
       {isSubmitting && progressMsg && (
         <div className="progress-message">
           <span className="progress-spinner" />
@@ -201,28 +206,19 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       )}
 
-      {/* Reporte cercano */}
       {nearbyReport && !isSubmitting && (
         <div className="nearby-report-warning">
-          <p className="nearby-report-title">
-            Ya existe un reporte cercano a este punto.
-          </p>
+          <p className="nearby-report-title">Ya existe un reporte cercano a este punto.</p>
           <p className="nearby-report-desc">
             {nearbyReport.category} — {nearbyReport.description?.slice(0, 60)}...
           </p>
           <div className="nearby-report-actions">
-            <button
-              type="button"
-              className="nearby-confirm-btn"
-              onClick={() => onConfirmExisting?.(nearbyReport)}
-            >
+            <button type="button" className="nearby-confirm-btn"
+              onClick={() => onConfirmExisting?.(nearbyReport)}>
               Confirmar reporte existente
             </button>
-            <button
-              type="button"
-              className="nearby-ignore-btn"
-              onClick={() => setNearbyReport(null)}
-            >
+            <button type="button" className="nearby-ignore-btn"
+              onClick={() => setNearbyReport(null)}>
               Ignorar y crear nuevo
             </button>
           </div>
@@ -237,19 +233,11 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
             <label
               key={cat.id}
               className={`category-option${formData.category === cat.name ? ' selected' : ''}`}
-              style={
-                formData.category === cat.name
-                  ? { borderColor: cat.color, backgroundColor: cat.color + '15' }
-                  : {}
-              }
+              style={formData.category === cat.name
+                ? { borderColor: cat.color, backgroundColor: cat.color + '15' } : {}}
             >
-              <input
-                type="radio"
-                name="category"
-                value={cat.name}
-                checked={formData.category === cat.name}
-                onChange={handleCategoryChange}
-              />
+              <input type="radio" name="category" value={cat.name}
+                checked={formData.category === cat.name} onChange={handleCategoryChange} />
               <span className="category-option-icon">{cat.icon}</span>
               <span className="category-option-name">{cat.name}</span>
             </label>
@@ -260,23 +248,16 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
       {/* Subtypes */}
       {hasSubtypes && (
         <div className="form-group">
-          <label>
-            {subtypeLabel}{' '}
-            <span className="optional">(opcional)</span>
-          </label>
+          <label>{subtypeLabel} <span className="optional">(opcional)</span></label>
           <div className="subtype-grid">
             {selectedCat.subtypes.map((sub) => {
               const active = formData.subtypes.includes(sub.id)
               return (
-                <button
-                  key={sub.id}
-                  type="button"
+                <button key={sub.id} type="button"
                   className={`subtype-chip${active ? ' active' : ''}`}
-                  style={active
-                    ? { borderColor: selectedCat.color, backgroundColor: selectedCat.color + '18', color: selectedCat.mapColor }
-                    : {}}
-                  onClick={() => toggleSubtype(sub.id)}
-                >
+                  style={active ? { borderColor: selectedCat.color,
+                    backgroundColor: selectedCat.color + '18', color: selectedCat.mapColor } : {}}
+                  onClick={() => toggleSubtype(sub.id)}>
                   {sub.icon} {sub.label}
                 </button>
               )
@@ -285,118 +266,67 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       )}
 
-      {/* Campos extra por categoría de infraestructura */}
-      {infraType === 'pole'     && (
-        <PoleReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />
-      )}
-      {infraType === 'water'    && (
-        <WaterReportFields    values={formData.infraMetadata} onChange={handleInfraMetadata} />
-      )}
-      {infraType === 'pipeline' && (
-        <PipelineReportFields values={formData.infraMetadata} onChange={handleInfraMetadata} />
-      )}
-      {infraType === 'road'     && (
-        <RoadReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />
-      )}
+      {infraType === 'pole'     && <PoleReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />}
+      {infraType === 'water'    && <WaterReportFields    values={formData.infraMetadata} onChange={handleInfraMetadata} />}
+      {infraType === 'pipeline' && <PipelineReportFields values={formData.infraMetadata} onChange={handleInfraMetadata} />}
+      {infraType === 'road'     && <RoadReportFields     values={formData.infraMetadata} onChange={handleInfraMetadata} />}
 
       {/* Descripción */}
       <div className="form-group">
         <label htmlFor="description">Descripción *</label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
+        <textarea id="description" name="description" value={formData.description}
           onChange={handleChange}
-          placeholder="Describe la situación con al menos 10 caracteres..."
-          rows={4}
-        />
-        <small
-          className="desc-counter"
-          style={{ color: formData.description.trim().length < 10 ? '#e74c3c' : '#27ae60' }}
-        >
+          placeholder="Describe la situación con al menos 10 caracteres..." rows={4} />
+        <small className="desc-counter"
+          style={{ color: formData.description.trim().length < 10 ? '#e74c3c' : '#27ae60' }}>
           {formData.description.trim().length} / 10 caracteres mínimo
         </small>
       </div>
 
-      {/* ── Fotografía ─────────────────────────────────────────────────────── */}
+      {/* Fotografía */}
       <div className="form-group">
-        <label>
-          Fotografía <span className="optional">(Requerido)</span>
-        </label>
+        <label>Fotografía <span className="optional">(opcional)</span></label>
 
-        {/* Preview — se muestra solo cuando hay imagen seleccionada */}
         {formData.image ? (
           <div className="image-preview-container">
             <div className="image-preview-wrapper">
-              <img
-                src={URL.createObjectURL(formData.image)}
-                alt="Vista previa"
-                className="image-preview"
-              />
+              <img src={URL.createObjectURL(formData.image)} alt="Vista previa"
+                className="image-preview" />
             </div>
             <div className="image-preview-footer">
               <p className="file-name">📎 {formData.image.name}</p>
-              <button
-                type="button"
-                className="image-remove-btn"
-                onClick={removeImage}
-                aria-label="Eliminar imagen"
-              >
+              <button type="button" className="image-remove-btn"
+                onClick={removeImage} aria-label="Eliminar imagen">
                 ✕ Quitar
               </button>
             </div>
           </div>
         ) : (
-          /* Botones de captura — visibles solo cuando NO hay imagen */
           <div className="image-capture-row">
-
-            {/* Tomar foto con la cámara */}
-            <button
-              type="button"
+            <button type="button"
               className="image-capture-btn image-capture-btn--camera"
-              onClick={() => cameraInputRef.current?.click()}
-            >
+              onClick={handleCameraBtn}>
               📷 Tomar foto
             </button>
-
-            {/* Elegir desde galería */}
-            <button
-              type="button"
+            <button type="button"
               className="image-capture-btn image-capture-btn--gallery"
-              onClick={() => galleryInputRef.current?.click()}
-            >
+              onClick={handleGalleryBtn}>
               🖼 Galería
             </button>
 
-            {/* Inputs ocultos */}
-            {/* capture="environment" → cámara trasera nativa en Android */}
-            <input
-              ref={cameraInputRef}
-              type="file"
+            {/* Inputs ocultos — solo usados en browser, ignorados en APK nativa */}
+            <input ref={cameraInputRef} type="file"
+              accept="image/jpeg,image/png,image/webp" capture="environment"
+              onChange={handleCameraInputChange} className="image-input-hidden" aria-hidden="true" />
+            <input ref={galleryInputRef} type="file"
               accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              onChange={handleCameraChange}
-              className="image-input-hidden"
-              aria-hidden="true"
-            />
-            {/* Sin capture → abre el selector de archivos / galería */}
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleGalleryChange}
-              className="image-input-hidden"
-              aria-hidden="true"
-            />
+              onChange={handleGalleryInputChange} className="image-input-hidden" aria-hidden="true" />
           </div>
         )}
 
-        <small className="image-help">
-          JPG · PNG · WEBP · Máx. 5 MB
-        </small>
+        <small className="image-help">JPG · PNG · WEBP · Máx. 5 MB</small>
       </div>
 
-      {/* Ubicación */}
       {location && (
         <div className="location-info">
           <span>📍</span>
@@ -404,25 +334,16 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       )}
 
-      {/* Aviso de privacidad */}
       {selectedCat?.applyPrivacy && (
         <div className="privacy-notice">
           <span>🔒</span>
-          <span>
-            Tu ubicación exacta no será pública. En el mapa aparecerá un punto aproximado dentro de un radio de ~400 m.
-          </span>
+          <span>Tu ubicación exacta no será pública. En el mapa aparecerá un punto aproximado dentro de un radio de ~400 m.</span>
         </div>
       )}
 
-      {/* Acciones */}
       <div className="form-actions">
         {onCancel && (
-          <button
-            type="button"
-            className="cancel-btn"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
+          <button type="button" className="cancel-btn" onClick={onCancel} disabled={isSubmitting}>
             Cancelar
           </button>
         )}

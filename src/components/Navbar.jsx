@@ -55,7 +55,7 @@ function Navbar() {
               {user ? (
                 <>
                   <Link to="/perfil" className="navbar-user-link">
-                    <UserAvatar name={displayName} size={32} />
+                    <UserAvatar name={displayName} size={32} photoURL={user?.photoURL} />
                     <span className="navbar-user">{displayName}</span>
                   </Link>
                   <button onClick={handleLogout} className="navbar-btn logout-btn">

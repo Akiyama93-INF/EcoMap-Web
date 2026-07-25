@@ -120,3 +120,18 @@
     min-height: 260px;
   }
 }
+/* ── Fix desborde horizontal en móvil/APK ───────────────────── */
+.home,
+.home-container,
+.map-section,
+.sidebar,
+.welcome-section {
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+ 
+.welcome-section p {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}

@@ -243,3 +243,14 @@ a:hover {
   color:            var(--leaflet-popup-text) !important;
   border-color:     var(--leaflet-popup-border) !important;
 }
+/* Pegar esto al FINAL de src/index.css */
+
+/* ── Fix desborde horizontal en móvil/APK ───────────────────────────────── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}

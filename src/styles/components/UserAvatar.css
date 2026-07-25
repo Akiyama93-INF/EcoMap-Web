@@ -10,3 +10,9 @@
   flex-shrink: 0;
   user-select: none;
 }
+.user-avatar--photo {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+  display: block;
+}
