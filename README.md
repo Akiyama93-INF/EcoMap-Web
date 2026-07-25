@@ -279,19 +279,6 @@ android/app/build/outputs/apk/release/app-release.apk
 
 ---
 
-## 🛣️ Futuras mejoras
-
-- 🛡️ Roles administrativos para moderación
-- 📊 Estadísticas ambientales por zona y categoría
-- 🔔 Push notifications con Firebase Cloud Messaging
-- 💬 Comentarios en reportes
-- 🗺️ Mapa de calor de zonas críticas
-- 📈 Dashboard de análisis para instituciones
-- 🔎 Filtros avanzados en el mapa
-- 🌐 Soporte multilenguaje
-
----
-
 ## 🤝 Contribuir
 
 1. Crear un Fork
