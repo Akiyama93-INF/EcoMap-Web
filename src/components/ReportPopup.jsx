@@ -1,10 +1,13 @@
-// ReportPopup — Fase 4
+// ReportPopup — v3 + comentarios
 // Añadido:
 //   - Badge de estado (Pendiente / Confirmado / Resuelto)
 //   - Botón para marcar como Resuelto (solo dueño del reporte)
+//   - Dirección aproximada via Nominatim reverse geocoding
+//   - Sección de comentarios en tiempo real con listener de Firestore
 
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getCategoryByName } from '../utils/categories'
+import { firestoreService } from '../firebase/firestoreService'
 import '../styles/components/ReportPopup.css'
 
 const STATUS_CONFIG = {
@@ -17,7 +20,109 @@ function getStatus(report) {
   return STATUS_CONFIG[report.status] ?? STATUS_CONFIG.pending
 }
 
-function ReportPopup({ report, onClose, currentUserId, onUpdateStatus }) {
+function useReverseGeocode(lat, lng) {
+  const [direccion, setDireccion] = useState('Cargando dirección...')
+
+  useEffect(() => {
+    if (!lat || !lng) {
+      setDireccion(null)
+      return
+    }
+
+    let cancelado = false
+
+    const fetchDireccion = async () => {
+      try {
+        const url =
+          `https://nominatim.openstreetmap.org/reverse` +
+          `?lat=${lat}&lon=${lng}&format=json&accept-language=es&zoom=16`
+
+        const res = await fetch(url, {
+          headers: { 'Accept-Language': 'es' },
+        })
+
+        if (!res.ok) throw new Error('Respuesta no válida')
+
+        const data = await res.json()
+
+        if (cancelado) return
+
+        const addr = data.address ?? {}
+
+        const partes = [
+          addr.road ?? addr.pedestrian ?? addr.footway ?? null,
+          addr.suburb ?? addr.neighbourhood ?? addr.quarter ?? null,
+          addr.city ?? addr.town ?? addr.village ?? addr.municipality ?? null,
+          addr.state ?? null,
+        ].filter(Boolean)
+
+        setDireccion(partes.length > 0 ? partes.join(', ') : 'Dirección no disponible')
+      } catch {
+        if (!cancelado) setDireccion('Dirección no disponible')
+      }
+    }
+
+    fetchDireccion()
+
+    return () => { cancelado = true }
+  }, [lat, lng])
+
+  return direccion
+}
+
+function ComentarioItem({ comentario, currentUserId, reportId, color }) {
+  const [eliminando, setEliminando] = useState(false)
+  const esPropio = currentUserId && currentUserId === comentario.userId
+
+  const fecha = comentario.createdAt?.toDate
+    ? comentario.createdAt.toDate().toLocaleDateString('es-SV', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : ''
+
+  const handleEliminar = async () => {
+    if (!window.confirm('¿Eliminar este comentario?')) return
+    setEliminando(true)
+    try {
+      await firestoreService.deleteComment(reportId, comentario.id, currentUserId)
+    } catch {
+      setEliminando(false)
+    }
+  }
+
+  const inicial = (comentario.userName ?? 'A')[0].toUpperCase()
+
+  return (
+    <div className="rp-comment">
+      <div className="rp-comment-avatar" style={{ backgroundColor: color + 'cc' }}>
+        {comentario.photoURL
+          ? <img src={comentario.photoURL} alt={comentario.userName} className="rp-comment-avatar-img" />
+          : inicial
+        }
+      </div>
+      <div className="rp-comment-content">
+        <div className="rp-comment-header">
+          <span className="rp-comment-author">{comentario.userName ?? 'Anónimo'}</span>
+          {fecha && <span className="rp-comment-fecha">{fecha}</span>}
+          {esPropio && (
+            <button
+              className="rp-comment-delete"
+              onClick={handleEliminar}
+              disabled={eliminando}
+              title="Eliminar comentario"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <p className="rp-comment-text">{comentario.text}</p>
+      </div>
+    </div>
+  )
+}
+
+function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStatus }) {
   if (!report) return null
 
   const cat    = getCategoryByName(report.category)
@@ -36,6 +141,55 @@ function ReportPopup({ report, onClose, currentUserId, onUpdateStatus }) {
   const subtypeLabels = (cat?.subtypes ?? [])
     .filter((s) => (report.subtypes ?? []).includes(s.id))
     .map((s) => ({ ...s }))
+
+  const direccion = useReverseGeocode(report.lat, report.lng)
+
+  // ── Comentarios ──────────────────────────────────────────────
+  const [comentarios, setComentarios]     = useState([])
+  const [textoNuevo, setTextoNuevo]       = useState('')
+  const [enviando, setEnviando]           = useState(false)
+  const [errorEnvio, setErrorEnvio]       = useState(null)
+  const comentariosEndRef                 = useRef(null)
+
+  useEffect(() => {
+    const unsub = firestoreService.subscribeToComments(
+      report.id,
+      (data) => setComentarios(data),
+      (err)  => console.error('Comentarios error:', err)
+    )
+    return () => unsub()
+  }, [report.id])
+
+  useEffect(() => {
+    comentariosEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [comentarios])
+
+  const handleEnviarComentario = async () => {
+    const texto = textoNuevo.trim()
+    if (!texto || !currentUserId) return
+    setEnviando(true)
+    setErrorEnvio(null)
+    try {
+      await firestoreService.addComment(report.id, {
+        userId:   currentUserId,
+        userName: currentUser?.displayName ?? 'Anónimo',
+        photoURL: currentUser?.photoURL ?? null,
+        text:     texto,
+      })
+      setTextoNuevo('')
+    } catch {
+      setErrorEnvio('No se pudo enviar el comentario. Intenta de nuevo.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleEnviarComentario()
+    }
+  }
 
   return (
     <div className="rp-overlay" onClick={onClose} role="dialog" aria-modal="true">
@@ -76,7 +230,6 @@ function ReportPopup({ report, onClose, currentUserId, onUpdateStatus }) {
               {' '}{status.label}
             </span>
 
-            {/* Botón marcar resuelto — solo dueño y si no está resuelto */}
             {isOwner && report.status !== 'resolved' && (
               <button
                 className="rp-resolve-btn"
@@ -132,19 +285,24 @@ function ReportPopup({ report, onClose, currentUserId, onUpdateStatus }) {
               <span className="rp-meta-label">Fecha</span>
               <span className="rp-meta-value">📅 {fecha}</span>
             </div>
-            <div className="rp-meta-item">
+
+            <div className="rp-meta-item rp-meta-full">
               <span className="rp-meta-label">
-                Coordenadas
+                Dirección aproximada
                 {cat?.applyPrivacy && (
                   <span className="rp-privacy-tag" title="Ubicación aproximada">
                     🔒 aprox.
                   </span>
                 )}
               </span>
-              <span className="rp-meta-value">
+              <span className="rp-meta-value rp-meta-address">
+                📍 {direccion}
+              </span>
+              <span className="rp-meta-coords">
                 {report.lat?.toFixed(4)}, {report.lng?.toFixed(4)}
               </span>
             </div>
+
             <div className="rp-meta-item">
               <span className="rp-meta-label">Categoría</span>
               <span
@@ -154,6 +312,59 @@ function ReportPopup({ report, onClose, currentUserId, onUpdateStatus }) {
                 {cat?.icon} {report.category}
               </span>
             </div>
+          </section>
+
+          {/* ── Comentarios ───────────────────────────────────── */}
+          <section className="rp-section rp-comments-section">
+            <h4>
+              Comentarios
+              {comentarios.length > 0 && (
+                <span className="rp-comments-count">{comentarios.length}</span>
+              )}
+            </h4>
+
+            {comentarios.length === 0 ? (
+              <p className="rp-comments-empty">Sin comentarios aún. Sé el primero.</p>
+            ) : (
+              <div className="rp-comments-list">
+                {comentarios.map((c) => (
+                  <ComentarioItem
+                    key={c.id}
+                    comentario={c}
+                    currentUserId={currentUserId}
+                    reportId={report.id}
+                    color={color}
+                  />
+                ))}
+                <div ref={comentariosEndRef} />
+              </div>
+            )}
+
+            {currentUserId ? (
+              <div className="rp-comment-form">
+                <textarea
+                  className="rp-comment-input"
+                  placeholder="Escribe un comentario..."
+                  value={textoNuevo}
+                  onChange={(e) => setTextoNuevo(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={2}
+                  maxLength={500}
+                  disabled={enviando}
+                />
+                {errorEnvio && <p className="rp-comment-error">{errorEnvio}</p>}
+                <button
+                  className="rp-comment-submit"
+                  onClick={handleEnviarComentario}
+                  disabled={enviando || !textoNuevo.trim()}
+                  style={{ backgroundColor: color, borderColor: color }}
+                >
+                  {enviando ? 'Enviando...' : 'Comentar'}
+                </button>
+              </div>
+            ) : (
+              <p className="rp-comments-login">Inicia sesión para comentar.</p>
+            )}
           </section>
         </div>
 

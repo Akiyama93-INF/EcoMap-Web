@@ -1,0 +1,239 @@
+/* Estadisticas.css — v3 */
+
+.est-page {
+  flex: 1;
+  background-color: var(--bg-color);
+  min-height: calc(100vh - 64px);
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.est-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Encabezado */
+.est-header {
+  margin-bottom: 0.5rem;
+}
+
+.est-titulo {
+  color: var(--primary-color);
+  font-size: 1.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.est-subtitulo {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Tarjetas resumen */
+.est-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.est-tarjeta {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border-left: 4px solid var(--primary-color);
+}
+
+.est-tarjeta-valor {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.est-tarjeta-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.est-tarjeta-sub {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-top: 0.15rem;
+}
+
+/* Grid de paneles */
+.est-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* Panel */
+.est-panel {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+.est-panel-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.est-vacio {
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* Lista de filas */
+.est-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.est-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.est-fila-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.est-fila-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.est-fila-nombre {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.est-fila-count {
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Barra horizontal */
+.est-barra-bg {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border-subtle, #eee);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.est-barra-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+/* Panel destacado — ancho completo */
+.est-panel-destacado {
+  grid-column: 1 / -1;
+}
+
+.est-destacado {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.est-destacado-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.est-destacado-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.est-destacado-cat {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.est-destacado-desc {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.est-destacado-confirm {
+  font-size: 0.8rem;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .est-tarjetas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .est-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .est-panel-destacado {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .est-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .est-tarjetas {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .est-tarjeta-valor {
+    font-size: 1.6rem;
+  }
+
+  .est-titulo {
+    font-size: 1.3rem;
+  }
+}

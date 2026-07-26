@@ -223,18 +223,19 @@ function Home() {
       )}
 
       {/* Modal de detalles */}
-      {openReport && (
-        <ReportPopup
-          report={openReport}
-          onClose={() => setOpenReport(null)}
-          currentUserId={user?.uid ?? null}
-          onUpdateStatus={async (reportId, status) => {
-            await firestoreService.updateReportStatus(reportId, status)
-            refresh()
-            setOpenReport(null)
-          }}
-        />
-      )}
+{openReport && (
+  <ReportPopup
+    report={openReport}
+    onClose={() => setOpenReport(null)}
+    currentUserId={user?.uid ?? null}
+    currentUser={user ?? null}
+    onUpdateStatus={async (reportId, status) => {
+      await firestoreService.updateReportStatus(reportId, status)
+      refresh()
+      setOpenReport(null)
+    }}
+  />
+)}
     </div>
   )
 }

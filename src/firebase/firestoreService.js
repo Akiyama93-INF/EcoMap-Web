@@ -1,10 +1,8 @@
-// firebase/firestoreService.js — Fase 4 (patch username)
+// firebase/firestoreService.js — v3 + comentarios
 // Añadido:
-//   - resolveUserName(): lee users/{uid} en Firestore para obtener displayName
-//   - enrichReports(): enriquece el array de reportes con el nombre real del autor
-//     sin modificar Firestore (compatibilidad con reportes viejos que tienen email)
-// Sin cambios:
-//   - Toda la lógica de CRUD, confirmaciones y estados permanece igual
+//   - addComment(reportId, userId, userName, text)
+//   - subscribeToComments(reportId, onData, onError)
+//   - deleteComment(reportId, commentId, userId)
 
 import {
   collection,
@@ -16,14 +14,16 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
   arrayUnion,
   onSnapshot,
   Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebaseInit'
 
-const REPORTS_COLLECTION = 'reports'
-const USERS_COLLECTION   = 'users'
+const REPORTS_COLLECTION  = 'reports'
+const USERS_COLLECTION    = 'users'
+const COMMENTS_COLLECTION = 'comments'
 
 // Cache en memoria para no hacer múltiples lecturas al mismo uid en la sesión
 const _nameCache = {}
@@ -54,9 +54,7 @@ async function enrichReports(rawReports) {
   await Promise.all([...uidSet].map((uid) => resolveUserName(uid, null)))
 
   return rawReports.map((r) => {
-    // Si el userName guardado ya es un nombre limpio, lo respeta
     if (!r.userName?.includes('@')) return r
-    // Si era un email, sustituye con el nombre resuelto (puede ser el mismo email si no hay perfil)
     return { ...r, userName: _nameCache[r.userId] ?? r.userName }
   })
 }
@@ -202,6 +200,56 @@ export const firestoreService = {
       })
     } catch (error) {
       throw new Error(`Error al marcar como limpio: ${error.message}`)
+    }
+  },
+
+  // ── v3: Comentarios ───────────────────────────────────────────────────────
+
+  // Agregar comentario a un reporte
+  async addComment(reportId, { userId, userName, photoURL = null, text }) {
+    try {
+      const ref = collection(db, REPORTS_COLLECTION, reportId, COMMENTS_COLLECTION)
+      await addDoc(ref, {
+        userId,
+        userName,
+        photoURL,
+        text: text.trim(),
+        createdAt: Timestamp.now(),
+      })
+    } catch (error) {
+      throw new Error(`Error al agregar comentario: ${error.message}`)
+    }
+  },
+
+  // Listener en tiempo real de comentarios de un reporte, ordenados por fecha
+  subscribeToComments(reportId, onData, onError) {
+    const q = query(
+      collection(db, REPORTS_COLLECTION, reportId, COMMENTS_COLLECTION),
+      orderBy('createdAt', 'asc')
+    )
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const comments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+        onData(comments)
+      },
+      (err) => {
+        console.error('subscribeToComments error:', err)
+        onError?.(err)
+      }
+    )
+  },
+
+  // Eliminar comentario — solo el autor puede hacerlo (también reforzado en reglas)
+  async deleteComment(reportId, commentId, userId) {
+    try {
+      const ref = doc(db, REPORTS_COLLECTION, reportId, COMMENTS_COLLECTION, commentId)
+      const snap = await getDoc(ref)
+      if (!snap.exists()) throw new Error('Comentario no encontrado')
+      if (snap.data().userId !== userId) throw new Error('Sin permiso para eliminar este comentario')
+      await deleteDoc(ref)
+    } catch (error) {
+      throw new Error(`Error al eliminar comentario: ${error.message}`)
     }
   },
 }
