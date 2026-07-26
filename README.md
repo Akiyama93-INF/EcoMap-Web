@@ -308,7 +308,7 @@ Correo: ecomap.proyecto@gmail.com
 
 ---
 
-## 🌎 EcoMap v2.0.0
+## 🌎 EcoMap v3.0.0
 
 Primera versión completa con APK Android, cámara nativa, perfiles con foto, modo oscuro total, 9 categorías de reporte incluyendo infraestructura urbana, sistema colaborativo de confirmaciones y seguridad de producción.
 
