@@ -1,87 +1,73 @@
-// Servicio de Autenticación
-// Maneja registro, login, logout y autenticación con Google
+// firebase/authService.js — v3 + FCM (temporalmente desactivado para diagnostico)
 
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  signInWithPopup,
-  GoogleAuthProvider,
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth'
-import { auth } from './firebaseInit'
-import { saveProfile } from './profileService'
+import { doc, setDoc, Timestamp } from 'firebase/firestore'
+import { auth, db } from './firebaseInit'
 
-export const authService = {
-  // Registro con email y contraseña
-  async register(email, password) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      return userCredential.user
-    } catch (error) {
-      throw new Error(`Error en registro: ${error.message}`)
-    }
-  },
+const USERS_COLLECTION = 'users'
 
-  // Actualiza displayName en Firebase Auth
-  async updateUserProfile(displayName, photoURL = null) {
+const authService = {
+
+  async register(email, password, displayName) {
     try {
-      const update = {
+      const { user } = await createUserWithEmailAndPassword(auth, email, password)
+      await updateProfile(user, { displayName })
+      await setDoc(doc(db, USERS_COLLECTION, user.uid), {
         displayName,
-        ...(photoURL && { photoURL }),
-      }
-      await updateProfile(auth.currentUser, update)
+        email,
+        fcmToken:  null,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      })
+      return user
     } catch (error) {
-      throw new Error(`Error actualizando perfil: ${error.message}`)
+      throw new Error(this._traducirError(error.code))
     }
   },
 
-  // Login con email y contraseña
   async login(email, password) {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      return userCredential.user
+      const { user } = await signInWithEmailAndPassword(auth, email, password)
+      return user
     } catch (error) {
-      throw new Error(`Error en login: ${error.message}`)
+      throw new Error(this._traducirError(error.code))
     }
   },
 
-  // Logout
   async logout() {
     try {
       await signOut(auth)
     } catch (error) {
-      throw new Error(`Error en logout: ${error.message}`)
+      throw new Error(`Error al cerrar sesión: ${error.message}`)
     }
   },
 
-  // Login con Google — guarda datos en Firestore tras el popup
-  async loginWithGoogle() {
-    try {
-      const provider = new GoogleAuthProvider()
-      const userCredential = await signInWithPopup(auth, provider)
-      const { user } = userCredential
-
-      await saveProfile(user.uid, {
-        displayName: user.displayName ?? '',
-        email:       user.email,
-      })
-
-      return user
-    } catch (error) {
-      throw new Error(`Error en login con Google: ${error.message}`)
-    }
-  },
-
-  // Escuchar cambios de autenticación
   onAuthChange(callback) {
     return onAuthStateChanged(auth, callback)
   },
 
-  // Obtener usuario actual
   getCurrentUser() {
     return auth.currentUser
+  },
+
+  _traducirError(code) {
+    const errores = {
+      'auth/user-not-found':         'No existe una cuenta con ese correo.',
+      'auth/wrong-password':         'Contraseña incorrecta.',
+      'auth/email-already-in-use':   'Ya existe una cuenta con ese correo.',
+      'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
+      'auth/invalid-email':          'El formato del correo no es válido.',
+      'auth/too-many-requests':      'Demasiados intentos. Intenta más tarde.',
+      'auth/network-request-failed': 'Sin conexión a internet.',
+      'auth/invalid-credential':     'Correo o contraseña incorrectos.',
+    }
+    return errores[code] ?? `Error de autenticación (${code})`
   },
 }
 

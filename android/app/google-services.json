@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "424454747908",
+    "project_id": "ecomaps-prueba",
+    "storage_bucket": "ecomaps-prueba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424454747908:android:963b9403ae9d4418868251",
+        "android_client_info": {
+          "package_name": "sv.ecomap.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "424454747908-cbv62dro9sc6vqku3ijkd90cb3o1667d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcQze5ar0U6urxxgfhxhZs-hS0UZC9nW8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "424454747908-cbv62dro9sc6vqku3ijkd90cb3o1667d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
