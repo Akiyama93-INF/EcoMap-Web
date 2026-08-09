@@ -60,22 +60,28 @@ async function enrichReports(rawReports) {
 }
 
 export const firestoreService = {
-  // Crear nuevo reporte
-  async createReport(reportData) {
-    try {
-      const docRef = await addDoc(collection(db, REPORTS_COLLECTION), {
-        ...reportData,
-        confirmations: [],
-        confirmationCount: 0,
-        status: 'active',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      })
-      return docRef.id
-    } catch (error) {
-      throw new Error(`Error al crear reporte: ${error.message}`)
-    }
-  },
+// Crear nuevo reporte
+async createReport(reportData) {
+  try {
+    const docRef = await addDoc(collection(db, REPORTS_COLLECTION), {
+      ...reportData,
+
+      // Contexto donde fue creado el reporte:
+      // "nacional" o "insa"
+      scope: reportData.scope ?? 'nacional',
+
+      confirmations: [],
+      confirmationCount: 0,
+      status: 'active',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+
+    return docRef.id
+  } catch (error) {
+    throw new Error(`Error al crear reporte: ${error.message}`)
+  }
+},
 
   // Obtener todos los reportes (lectura puntual) con nombres resueltos
   async getReports() {

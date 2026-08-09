@@ -133,9 +133,26 @@ export const CATEGORIES = {
       { id: 'otro',         label: 'Otro',                    icon: '❓' },
     ],
   },
+  // Categoría exclusiva del mapa institucional INSA
+  INSA_TRASH: {
+    id: 'basura_botada',
+    name: 'Basura botada',
+    icon: '🗑️',
+    color: '#e74c3c',
+    mapColor: '#c0392b',
+    reportType: 'citizen',
+    description: 'Basura depositada en un lugar no autorizado dentro del campus',
+    applyPrivacy: false,
+    subtypes: [],
+  },
 }
 
-export const CATEGORIES_ARRAY = Object.values(CATEGORIES)
+export const CATEGORIES_ARRAY = Object.values(CATEGORIES).filter(
+  (c) => c.id !== 'basura_botada'
+)
+
+// Categorías disponibles en el mapa institucional INSA
+export const INSA_CATEGORIES_ARRAY = [CATEGORIES.INSA_TRASH]
 
 export const getCategoryById = (id) =>
   CATEGORIES_ARRAY.find((c) => c.id === id)

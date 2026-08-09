@@ -51,13 +51,17 @@ function Navbar() {
 
         <div className="navbar-menu">
 
-          <Link to="/" className="navbar-link">
-            Inicio
-          </Link>
+<Link to="/nacional" className="navbar-link">
+  EcoMap Nacional
+</Link>
 
-          <Link to="/estadisticas" className="navbar-link">
-            Estadísticas
-          </Link>
+<Link to="/insa" className="navbar-link">
+  EcoMap INSA
+</Link>
+
+<Link to="/estadisticas" className="navbar-link">
+  Estadísticas
+</Link>
 
           <button
             onClick={toggleTheme}

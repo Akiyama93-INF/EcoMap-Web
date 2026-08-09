@@ -1,8 +1,9 @@
 // ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
 // Cámara: en APK usa @capacitor/camera (nativo), en browser usa input file estándar
+// Actualizado: botón "Usar mi ubicación" con GPS de alta precisión (solo en scope nacional)
 
 import React, { useState, useEffect, useRef } from 'react'
-import { CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
+import { CATEGORIES_ARRAY, INSA_CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
 import PoleReportFields     from './PoleReportFields'
 import WaterReportFields    from './WaterReportFields'
 import PipelineReportFields from './PipelineReportFields'
@@ -22,11 +23,15 @@ function getDistanceMeters(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+function getDistancePx(x1, y1, x2, y2) {
+  return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+}
+
 function validateDescription(desc) {
   const trimmed = desc.trim()
   if (trimmed.length < 10)
     return 'La descripción debe tener al menos 10 caracteres.'
-  if (/^(.)\1+$/.test(trimmed))
+  if (/^(.)\\1+$/.test(trimmed))
     return 'La descripción no es válida.'
   if (/^[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]*$/.test(trimmed))
     return 'La descripción debe contener texto legible.'
@@ -47,10 +52,62 @@ const SUBTYPE_LABELS = {
   obstruccion_vial: 'Tipo de obstrucción',
 }
 
-function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExisting }) {
+// ── Hook de GPS de alta precisión (solo para el formulario) ───────────────────
+function useFormGeolocation() {
+  const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsError,   setGpsError]   = useState(null)
+
+  const getPosition = (onSuccess) => {
+    if (!navigator.geolocation) {
+      setGpsError('Tu navegador no soporta geolocalización.')
+      return
+    }
+
+    setGpsLoading(true)
+    setGpsError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLoading(false)
+        onSuccess({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        })
+      },
+      (err) => {
+        setGpsLoading(false)
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setGpsError('Permiso de ubicación denegado. Actívalo en la configuración del navegador.')
+            break
+          case err.POSITION_UNAVAILABLE:
+            setGpsError('No se pudo obtener tu ubicación. Intenta de nuevo.')
+            break
+          case err.TIMEOUT:
+            setGpsError('Tiempo de espera agotado. Intenta de nuevo.')
+            break
+          default:
+            setGpsError('Error desconocido al obtener ubicación.')
+        }
+      },
+      {
+        enableHighAccuracy: true, // GPS de alta precisión — no IP/wifi
+        timeout: 12000,
+        maximumAge: 0,            // Sin caché — siempre posición fresca
+      }
+    )
+  }
+
+  return { gpsLoading, gpsError, getPosition }
+}
+
+function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExisting, scope = 'nacional', onLocationChange }) {
+  const availableCategories = scope === 'insa' ? INSA_CATEGORIES_ARRAY : CATEGORIES_ARRAY
+
   const [formData, setFormData] = useState({
     description:   '',
-    category:      CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
+    category:      availableCategories[0]?.name ?? 'Basurero clandestino',
     image:         null,
     subtypes:      [],
     infraMetadata: {},
@@ -59,11 +116,13 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const [progressMsg,  setProgressMsg]  = useState(null)
   const [error,        setError]        = useState(null)
   const [nearbyReport, setNearbyReport] = useState(null)
+  const [gpsAccuracy,  setGpsAccuracy]  = useState(null) // metros de precisión del GPS usado
 
   const cameraInputRef  = useRef(null)
   const galleryInputRef = useRef(null)
 
   const { takePhoto, pickFromGallery, isNative, error: camError } = useCameraNative()
+  const { gpsLoading, gpsError, getPosition } = useFormGeolocation()
 
   const MAX_IMAGE_SIZE      = 5 * 1024 * 1024
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -75,11 +134,11 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
   useEffect(() => {
     if (!location || markers.length === 0) { setNearbyReport(null); return }
-    const found = markers.find((m) =>
-      getDistanceMeters(location.lat, location.lng, m.lat, m.lng) <= 50
-    )
+    const found = scope === 'insa'
+      ? markers.find((m) => getDistancePx(location.lat, location.lng, m.lat, m.lng) <= 30)
+      : markers.find((m) => getDistanceMeters(location.lat, location.lng, m.lat, m.lng) <= 50)
     setNearbyReport(found ?? null)
-  }, [location, markers])
+  }, [location, markers, scope])
 
   const handleCategoryChange = (e) => {
     setFormData((p) => ({ ...p, category: e.target.value, subtypes: [], infraMetadata: {} }))
@@ -104,14 +163,23 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     setFormData((prev) => ({ ...prev, image: file }))
   }
 
+  // ── Botón "Usar mi ubicación" ─────────────────────────────────────────────
+  const handleUseMyLocation = () => {
+    getPosition((pos) => {
+      setGpsAccuracy(pos.accuracy)
+      // Notificar a Home.jsx para actualizar selectedLocation y mover el mapa
+      if (onLocationChange) {
+        onLocationChange({ lat: pos.lat, lng: pos.lng })
+      }
+    })
+  }
+
   // ── Cámara ───────────────────────────────────────────────────────────────
   const handleCameraBtn = async () => {
     if (isNative) {
-      // APK: usa Capacitor Camera API — abre cámara nativa directamente
       const file = await takePhoto()
       if (file) applyImageFile(file)
     } else {
-      // Browser: input file con capture
       cameraInputRef.current?.click()
     }
   }
@@ -119,11 +187,9 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   // ── Galería ──────────────────────────────────────────────────────────────
   const handleGalleryBtn = async () => {
     if (isNative) {
-      // APK: usa Capacitor Camera API — abre selector de fotos nativo
       const file = await pickFromGallery()
       if (file) applyImageFile(file)
     } else {
-      // Browser: input file normal
       galleryInputRef.current?.click()
     }
   }
@@ -156,7 +222,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
     const descError = validateDescription(formData.description)
     if (descError) { setError(descError); return }
-    if (!location)  { setError('Selecciona una ubicación en el mapa'); return }
+    if (!location)  { setError('Selecciona una ubicación en el mapa o usa tu GPS'); return }
 
     setIsSubmitting(true)
     setProgressMsg(formData.image ? 'Subiendo imagen...' : 'Guardando reporte...')
@@ -175,9 +241,10 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
     try {
       await onSubmit?.(payload, (msg) => setProgressMsg(msg))
       setFormData({
-        description: '', category: CATEGORIES_ARRAY[0]?.name ?? 'Basurero clandestino',
+        description: '', category: availableCategories[0]?.name ?? 'Basurero clandestino',
         image: null, subtypes: [], infraMetadata: {},
       })
+      setGpsAccuracy(null)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -229,7 +296,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
       <div className="form-group">
         <label>Categoría *</label>
         <div className="category-selector">
-          {CATEGORIES_ARRAY.map((cat) => (
+          {availableCategories.map((cat) => (
             <label
               key={cat.id}
               className={`category-option${formData.category === cat.name ? ' selected' : ''}`}
@@ -327,14 +394,56 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         <small className="image-help">JPG · PNG · WEBP · Máx. 5 MB</small>
       </div>
 
-      {location && (
-        <div className="location-info">
-          <span>📍</span>
-          <span>{location.lat.toFixed(5)}, {location.lng.toFixed(5)}</span>
+      {/* Ubicación — solo en scope nacional */}
+      {scope !== 'insa' && (
+        <div className="form-group">
+          <label>Ubicación *</label>
+
+          {/* Botón GPS preciso */}
+          <button
+            type="button"
+            className="gps-location-btn"
+            onClick={handleUseMyLocation}
+            disabled={gpsLoading || isSubmitting}
+          >
+            {gpsLoading
+              ? <><span className="progress-spinner" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> Obteniendo GPS...</>
+              : '📍 Usar mi ubicación'}
+          </button>
+
+          {gpsError && (
+            <p className="gps-error">{gpsError}</p>
+          )}
+
+          {location && (
+            <div className="location-info" style={{ marginTop: '0.5rem' }}>
+              <span>✅</span>
+              <span>
+                {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                {gpsAccuracy !== null && (
+                  <span className="location-accuracy"> · precisión ~{Math.round(gpsAccuracy)} m</span>
+                )}
+              </span>
+            </div>
+          )}
+
+          {!location && !gpsLoading && (
+            <p className="location-hint">
+              Toca "Usar mi ubicación" o haz clic directamente en el mapa.
+            </p>
+          )}
         </div>
       )}
 
-      {selectedCat?.applyPrivacy && (
+      {/* Ubicación INSA — solo coordenadas del plano */}
+      {scope === 'insa' && location && (
+        <div className="location-info">
+          <span>📍</span>
+          <span>Posición en el plano: ({Math.round(location.lat)}, {Math.round(location.lng)})</span>
+        </div>
+      )}
+
+      {selectedCat?.applyPrivacy && scope !== 'insa' && (
         <div className="privacy-notice">
           <span>🔒</span>
           <span>Tu ubicación exacta no será pública. En el mapa aparecerá un punto aproximado dentro de un radio de ~400 m.</span>

@@ -1,0 +1,141 @@
+/* ── INSAMapView.css — Mapa interno del Instituto Nacional de Santa Ana ─────── */
+
+/* Contenedor principal — mismas dimensiones que .mapview-container */
+.insa-mapview-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 64px);
+  min-height: 500px;
+  overflow: hidden;
+  background-color: #d4cfc7; /* color neutro mientras carga la imagen */
+  border-radius: var(--border-radius);
+}
+
+/* Mapa de Leaflet con CRS.Simple */
+.insa-mapview {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  /* Fondo grisáceo: se ve en el margen cuando se hace zoom out */
+  background-color: #c8c4bc;
+}
+
+/* ── Etiqueta institucional (esquina superior izquierda) ──────────────────── */
+.insa-map-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: rgba(46, 204, 113, 0.92);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.insa-map-label-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ── Instrucción de uso (parte inferior, centrada) ────────────────────────── */
+.insa-map-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Heredar estilos de popup de MapView.css (ya están en index.css global) ── */
+
+/* Fondo del leaflet-container dentro del mapa INSA — neutro, sin tiles */
+.insa-mapview .leaflet-container {
+  background: #c8c4bc;
+  font-family: inherit;
+}
+
+/* El ImageOverlay no debe quedar desenfocado al hacer zoom */
+.insa-mapview .leaflet-image-layer {
+  image-rendering: auto;
+}
+
+/* ── Controles de zoom de Leaflet ────────────────────────────────────────── */
+.insa-mapview .leaflet-control-zoom {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.insa-mapview .leaflet-control-zoom a {
+  background-color: var(--white);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  transition: background-color 0.15s;
+}
+
+.insa-mapview .leaflet-control-zoom a:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+/* ── Marcadores (heredados de MapView.css — deben coexistir) ──────────────── */
+/* Las clases .cat-marker, .cat-marker-symbol, .cat-marker-tail,
+   .popup-content, .popup-*, etc. ya están definidas en MapView.css
+   que Home.jsx importa indirectamente a través de MapView.
+   No se redefinen aquí para evitar conflictos. */
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .insa-mapview-container {
+    height: 55vh;
+    min-height: 320px;
+  }
+
+  .insa-map-hint {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.75rem;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .insa-mapview-container {
+    height: 50vh;
+    min-height: 260px;
+  }
+
+  .insa-map-label {
+    font-size: 0.7rem;
+    padding: 0.28rem 0.6rem;
+    top: 8px;
+    left: 8px;
+  }
+
+  .insa-map-hint {
+    display: none; /* en móvil ocupa espacio valioso */
+  }
+}

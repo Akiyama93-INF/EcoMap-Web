@@ -29,6 +29,11 @@ import '../styles/components/MapView.css'
 const EL_SALVADOR_CENTER = [13.7942, -88.8965]
 const EL_SALVADOR_BOUNDS = [[12.8, -90.1], [14.8, -87.6]]
 
+// Centro aproximado de Santa Ana.
+// En el siguiente paso lo sustituiremos por los límites
+// exactos del campus del INSA.
+const INSA_CENTER = [13.9942, -89.5598]
+
 const TILE_LIGHT = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -108,15 +113,18 @@ function MarkerOpener({ markerId, markerRefs }) {
 }
 
 function MapView({
+  scope = 'nacional',
   onMarkerPlace,
-  markers = [],
+  markers,
   flyTarget,
   selectedMarkerId,
   currentUserId,
   onConfirmReport,
   showReportForm,
+  isDark,
 }) {
-  const { isDark } = useTheme() // ← lee del Context, siempre sincronizado
+  const { isDark: themeIsDark } = useTheme() // ← lee del Context, siempre sincronizado
+  const isDarkActive = themeIsDark ?? isDark
 
   const [clickedLocation, setClickedLocation]     = useState(null)
   const [internalFlyTarget, setInternalFlyTarget] = useState(null)
@@ -174,13 +182,13 @@ function MapView({
 
       {outOfBoundsMsg && (
         <div className="map-out-of-bounds">
-          EcoMap solo opera dentro de El Salvador.
+          EcoMap solo opera en El Salvador.
         </div>
       )}
 
       <MapContainer
-        center={EL_SALVADOR_CENTER}
-        zoom={9}
+  center={scope === 'insa' ? INSA_CENTER : EL_SALVADOR_CENTER}
+  zoom={scope === 'insa' ? 15 : 9}
         className="mapview"
         zoomControl={false}
         ref={mapRef}

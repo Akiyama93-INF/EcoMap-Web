@@ -452,3 +452,50 @@
   background: var(--danger-color);
   color: #ffffff;
 }
+/* ── Botón GPS preciso (scope nacional) ──────────────────────── */
+.gps-location-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  background-color: var(--secondary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, background-color 0.2s;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.gps-location-btn:hover:not(:disabled) {
+  background-color: #1a8a4a;
+  opacity: 1;
+}
+
+.gps-location-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.gps-error {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--danger-color);
+}
+
+.location-accuracy {
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.location-hint {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  font-style: italic;
+}
