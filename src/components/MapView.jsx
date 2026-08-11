@@ -7,6 +7,7 @@
 //   - Props nuevas: currentUserId, onConfirmReport
 // Fix aplicado:
 //   - mapRef + invalidateSize() al cambiar showReportForm (bug resolución mapa)
+//   - externalLocation: pin azul sincronizado con selectedLocation de Home
 // Actualizado:
 //   - useTheme() directo: tiles oscuros sin depender de prop isDark
 //   - CATEGORY_ICONS incluye CONTAMINATED_RIVER
@@ -29,9 +30,6 @@ import '../styles/components/MapView.css'
 const EL_SALVADOR_CENTER = [13.7942, -88.8965]
 const EL_SALVADOR_BOUNDS = [[12.8, -90.1], [14.8, -87.6]]
 
-// Centro aproximado de Santa Ana.
-// En el siguiente paso lo sustituiremos por los límites
-// exactos del campus del INSA.
 const INSA_CENTER = [13.9942, -89.5598]
 
 const TILE_LIGHT = {
@@ -122,8 +120,11 @@ function MapView({
   onConfirmReport,
   showReportForm,
   isDark,
+  // Nueva prop: ubicación actual del formulario (selectedLocation de Home)
+  // Mantiene el pin azul sincronizado aunque la ubicación venga del GPS
+  externalLocation,
 }) {
-  const { isDark: themeIsDark } = useTheme() // ← lee del Context, siempre sincronizado
+  const { isDark: themeIsDark } = useTheme()
   const isDarkActive = themeIsDark ?? isDark
 
   const [clickedLocation, setClickedLocation]     = useState(null)
@@ -140,6 +141,21 @@ function MapView({
 
   const markerRefs = useRef({})
   const mapRef     = useRef(null)
+
+  // Sincronizar pin azul con externalLocation (viene de Home.selectedLocation)
+  // Esto cubre el caso donde la ubicación se actualiza por GPS desde el formulario
+  useEffect(() => {
+    if (externalLocation) {
+      setClickedLocation(externalLocation)
+    }
+  }, [externalLocation])
+
+  // Limpiar pin azul cuando se cierra el formulario
+  useEffect(() => {
+    if (!showReportForm) {
+      setClickedLocation(null)
+    }
+  }, [showReportForm])
 
   // invalidar tamaño del mapa cuando el sidebar abre/cierra
   useEffect(() => {
@@ -168,7 +184,7 @@ function MapView({
     setTimeout(() => setOutOfBoundsMsg(false), 2500)
   }, [])
 
-  const tiles = isDark ? TILE_DARK : TILE_LIGHT
+  const tiles = isDarkActive ? TILE_DARK : TILE_LIGHT
 
   return (
     <div className="mapview-container">
@@ -187,15 +203,15 @@ function MapView({
       )}
 
       <MapContainer
-  center={scope === 'insa' ? INSA_CENTER : EL_SALVADOR_CENTER}
-  zoom={scope === 'insa' ? 15 : 9}
+        center={scope === 'insa' ? INSA_CENTER : EL_SALVADOR_CENTER}
+        zoom={scope === 'insa' ? 15 : 9}
         className="mapview"
         zoomControl={false}
         ref={mapRef}
       >
         {/* key fuerza remount del TileLayer al cambiar tema */}
         <TileLayer
-          key={isDark ? 'dark' : 'light'}
+          key={isDarkActive ? 'dark' : 'light'}
           url={tiles.url}
           attribution={tiles.attribution}
         />
@@ -206,6 +222,7 @@ function MapView({
         <UserLocationMarker position={userPosition} />
         <MarkerOpener markerId={selectedMarkerId} markerRefs={markerRefs} />
 
+        {/* Pin azul — siempre refleja la ubicación real del reporte */}
         {clickedLocation && (
           <Marker position={[clickedLocation.lat, clickedLocation.lng]} icon={CLICKED_ICON}>
             <Popup>

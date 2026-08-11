@@ -4,6 +4,7 @@
 //   - AbortController: cancela petición anterior antes de mandar nueva
 //   - Debounce subido a 600ms para respetar rate limit de Nominatim
 //   - Header Referer agregado para evitar bloqueos
+//   - featuretype y dedupe para resultados más relevantes y rápidos
 
 import { useState, useCallback, useRef } from 'react'
 
@@ -45,6 +46,11 @@ export const useNominatim = () => {
           limit:           6,
           addressdetails:  1,
           'accept-language': 'es',
+          // Prioriza resultados dentro de El Salvador sin excluir nada
+          // featuretype=settlement,road,poi acelera la búsqueda ignorando límites administrativos menores
+          featuretype:     'settlement,road,poi',
+          // dedupe=1 elimina resultados duplicados (mismo lugar con nombres distintos)
+          dedupe:          1,
         })
 
         const res = await fetch(`${NOMINATIM_URL}?${params}`, {

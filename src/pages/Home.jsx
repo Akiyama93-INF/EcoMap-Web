@@ -313,7 +313,7 @@ function Home({ scope = 'nacional' }) {
           currentUserId={user?.uid ?? null}
           currentUser={user ?? null}
           onUpdateStatus={async (reportId, status) => {
-            await firestoreService.updateReportStatus(reportId, status)
+            await firestoreService.updateReportStatus(reportId, status, user?.uid)
             refresh()
             setOpenReport(null)
           }}

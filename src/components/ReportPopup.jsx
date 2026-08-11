@@ -145,6 +145,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
   const direccion = useReverseGeocode(report.lat, report.lng)
 
   // ── Comentarios ──────────────────────────────────────────────
+  const [confirmingResolve, setConfirmingResolve] = useState(false)
   const [comentarios, setComentarios]     = useState([])
   const [textoNuevo, setTextoNuevo]       = useState('')
   const [enviando, setEnviando]           = useState(false)
@@ -231,12 +232,33 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
             </span>
 
             {isOwner && report.status !== 'resolved' && (
-              <button
-                className="rp-resolve-btn"
-                onClick={() => onUpdateStatus?.(report.id, 'resolved')}
-              >
-                Marcar como resuelto
-              </button>
+              confirmingResolve ? (
+                <div className="rp-resolve-confirm">
+                  <span className="rp-resolve-confirm-text">¿Marcar como resuelto?</span>
+                  <button
+                    className="rp-resolve-btn rp-resolve-btn--yes"
+                    onClick={() => {
+                      setConfirmingResolve(false)
+                      onUpdateStatus?.(report.id, 'resolved')
+                    }}
+                  >
+                    Sí, resuelto
+                  </button>
+                  <button
+                    className="rp-resolve-btn rp-resolve-btn--no"
+                    onClick={() => setConfirmingResolve(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="rp-resolve-btn"
+                  onClick={() => setConfirmingResolve(true)}
+                >
+                  Marcar como resuelto
+                </button>
+              )
             )}
           </div>
 
@@ -352,11 +374,19 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                   maxLength={500}
                   disabled={enviando}
                 />
-                {errorEnvio && <p className="rp-comment-error">{errorEnvio}</p>}
+                <div className="rp-comment-meta">
+                  {errorEnvio && <p className="rp-comment-error">{errorEnvio}</p>}
+                  <span
+                    className="rp-comment-counter"
+                    style={{ color: textoNuevo.length >= 480 ? 'var(--text-danger, #e74c3c)' : 'var(--text-muted)' }}
+                  >
+                    {textoNuevo.length}/500
+                  </span>
+                </div>
                 <button
                   className="rp-comment-submit"
                   onClick={handleEnviarComentario}
-                  disabled={enviando || !textoNuevo.trim()}
+                  disabled={enviando || textoNuevo.trim().length < 3}
                   style={{ backgroundColor: color, borderColor: color }}
                 >
                   {enviando ? 'Enviando...' : 'Comentar'}

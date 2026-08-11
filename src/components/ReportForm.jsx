@@ -1,6 +1,8 @@
 // ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
 // Cámara: en APK usa @capacitor/camera (nativo), en browser usa input file estándar
 // Actualizado: botón "Usar mi ubicación" con GPS de alta precisión (solo en scope nacional)
+// Fix: radio de detección de duplicados reducido de 50m a 30m
+// Fix: removido aviso de "punto aproximado" del formulario (applyPrivacy solo afecta al marcador del usuario)
 
 import React, { useState, useEffect, useRef } from 'react'
 import { CATEGORIES_ARRAY, INSA_CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
@@ -31,7 +33,7 @@ function validateDescription(desc) {
   const trimmed = desc.trim()
   if (trimmed.length < 10)
     return 'La descripción debe tener al menos 10 caracteres.'
-  if (/^(.)\\1+$/.test(trimmed))
+  if (/^(.)\1+$/.test(trimmed))
     return 'La descripción no es válida.'
   if (/^[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ]*$/.test(trimmed))
     return 'La descripción debe contener texto legible.'
@@ -116,7 +118,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const [progressMsg,  setProgressMsg]  = useState(null)
   const [error,        setError]        = useState(null)
   const [nearbyReport, setNearbyReport] = useState(null)
-  const [gpsAccuracy,  setGpsAccuracy]  = useState(null) // metros de precisión del GPS usado
+  const [gpsAccuracy,  setGpsAccuracy]  = useState(null)
 
   const cameraInputRef  = useRef(null)
   const galleryInputRef = useRef(null)
@@ -132,11 +134,12 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const infraType    = INFRA_FIELDS[selectedCat?.id] ?? null
   const subtypeLabel = SUBTYPE_LABELS[selectedCat?.id] ?? 'Materiales aceptados'
 
+  // Detección de duplicados — radio reducido a 30m para evitar falsos positivos
   useEffect(() => {
     if (!location || markers.length === 0) { setNearbyReport(null); return }
     const found = scope === 'insa'
       ? markers.find((m) => getDistancePx(location.lat, location.lng, m.lat, m.lng) <= 30)
-      : markers.find((m) => getDistanceMeters(location.lat, location.lng, m.lat, m.lng) <= 50)
+      : markers.find((m) => getDistanceMeters(location.lat, location.lng, m.lat, m.lng) <= 30)
     setNearbyReport(found ?? null)
   }, [location, markers, scope])
 
@@ -443,12 +446,9 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         </div>
       )}
 
-      {selectedCat?.applyPrivacy && scope !== 'insa' && (
-        <div className="privacy-notice">
-          <span>🔒</span>
-          <span>Tu ubicación exacta no será pública. En el mapa aparecerá un punto aproximado dentro de un radio de ~400 m.</span>
-        </div>
-      )}
+      {/* Aviso de privacidad removido del formulario:
+          applyPrivacy desplaza el marcador del USUARIO en el mapa,
+          no afecta las coordenadas exactas guardadas del reporte. */}
 
       <div className="form-actions">
         {onCancel && (

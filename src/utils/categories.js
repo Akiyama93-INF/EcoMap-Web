@@ -14,7 +14,7 @@ export const CATEGORIES = {
     mapColor: '#c0392b',
     reportType: 'citizen',
     description: 'Sitio donde se deposita basura de forma ilegal',
-    applyPrivacy: true,
+    applyPrivacy: false,
     subtypes: [],
   },
   ECOLOGICAL_POINT: {
@@ -43,7 +43,7 @@ export const CATEGORIES = {
     mapColor: '#d68910',
     reportType: 'incident',
     description: 'Derrame, quema ilegal u otro incidente ambiental',
-    applyPrivacy: true,
+    applyPrivacy: false,
     subtypes: [],
   },
   CONTAMINATED_RIVER: {
@@ -54,7 +54,7 @@ export const CATEGORIES = {
     mapColor: '#7d3c98',
     reportType: 'river',
     description: 'Río o cuerpo de agua con contaminación visible',
-    applyPrivacy: true,
+    applyPrivacy: false,
     subtypes: [
       { id: 'basura',  label: 'Basura / desechos', icon: '🗑️' },
       { id: 'quimico', label: 'Químicos / espuma',  icon: '⚗️' },

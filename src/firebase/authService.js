@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth'
-import { doc, setDoc, Timestamp } from 'firebase/firestore'
+import { doc, setDoc, Timestamp, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './firebaseInit'
 
 const USERS_COLLECTION = 'users'
@@ -51,24 +51,23 @@ const authService = {
       const provider = new GoogleAuthProvider()
       const { user } = await signInWithPopup(auth, provider)
 
-      // Crear o actualizar el documento del usuario en Firestore
-      // setDoc con merge:true no sobreescribe datos existentes
+      // Crear o actualizar documento del usuario en Firestore.
+      // merge: true nunca sobreescribe campos existentes como createdAt.
+      // Si el documento no existe, Firestore escribe todos los campos incluido createdAt.
+      // Si ya existe, solo actualiza displayName, email, photoURL y updatedAt.
+      const userRef = doc(db, USERS_COLLECTION, user.uid)
+      const userSnap = await import('firebase/firestore').then(m => m.getDoc(userRef))
+
       await setDoc(
-        doc(db, USERS_COLLECTION, user.uid),
+        userRef,
         {
           displayName: user.displayName ?? '',
           email:       user.email ?? '',
           photoURL:    user.photoURL ?? null,
           updatedAt:   Timestamp.now(),
+          // createdAt solo se escribe si el documento no existía
+          ...(!userSnap.exists() ? { createdAt: Timestamp.now() } : {}),
         },
-        { merge: true }
-      )
-
-      // Si es un usuario nuevo, agregar createdAt
-      // (setDoc con merge no lo sobreescribe si ya existe)
-      await setDoc(
-        doc(db, USERS_COLLECTION, user.uid),
-        { createdAt: Timestamp.now() },
         { merge: true }
       )
 

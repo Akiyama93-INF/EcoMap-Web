@@ -1,8 +1,10 @@
-// firebase/firestoreService.js — v3 + comentarios
+// firebase/firestoreService.js — v4
 // Añadido:
 //   - addComment(reportId, userId, userName, text)
 //   - subscribeToComments(reportId, onData, onError)
 //   - deleteComment(reportId, commentId, userId)
+//   - subscribeToReportsByScope(scope, onData, onError) — query filtrada en Firestore
+//   - updateReportStatus valida ownership antes de escribir
 
 import {
   collection,
@@ -94,7 +96,29 @@ async createReport(reportData) {
     }
   },
 
-  // Listener en tiempo real con nombres resueltos
+  // Listener en tiempo real filtrado por scope (más eficiente que traer todo)
+  // Requiere índice compuesto en Firestore: scope ASC + createdAt DESC
+  // El link para crearlo aparece en consola la primera vez que se usa.
+  subscribeToReportsByScope(scope, onData, onError) {
+    const q = query(
+      collection(db, REPORTS_COLLECTION),
+      where('scope', '==', scope)
+    )
+    return onSnapshot(
+      q,
+      async (snapshot) => {
+        const raw = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+        const enriched = await enrichReports(raw)
+        onData(enriched)
+      },
+      (err) => {
+        console.error('subscribeToReportsByScope error:', err)
+        onError?.(err)
+      }
+    )
+  },
+
+  // Listener en tiempo real con nombres resueltos (todos los reportes — mantener por compatibilidad)
   subscribeToReports(onData, onError) {
     const q = collection(db, REPORTS_COLLECTION)
     return onSnapshot(
@@ -184,8 +208,17 @@ async createReport(reportData) {
   },
 
   // ── Fase 4: Estados de reporte ────────────────────────────────────────────
-  async updateReportStatus(reportId, status) {
+  // userId requerido para validar ownership antes de escribir
+  async updateReportStatus(reportId, status, userId) {
     try {
+      const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
+      if (!snap.exists()) throw new Error('Reporte no encontrado')
+
+      // Validar que el usuario sea el dueño del reporte
+      if (userId && snap.data().userId !== userId) {
+        throw new Error('No tienes permiso para modificar este reporte')
+      }
+
       await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
         status,
         updatedAt: Timestamp.now(),

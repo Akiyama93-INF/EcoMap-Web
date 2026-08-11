@@ -4,7 +4,10 @@
 //   - "nacional" → reportes nacionales
 //   - "insa"     → reportes del INSA
 //
-// Los reportes antiguos que no tengan scope se consideran nacionales.
+// Fix perf: query filtrada por scope directamente en Firestore
+// en lugar de traer todo y filtrar en cliente.
+// Compatibilidad: reportes sin campo scope se tratan como nacionales
+// mediante el listener heredado.
 
 import { useState, useEffect } from 'react'
 import firestoreService from '../firebase/firestoreService'
@@ -17,35 +20,26 @@ export const useReports = (scope = 'nacional') => {
 
   // Estado de conexión
   useEffect(() => {
-    const goOnline = () => setIsOffline(false)
+    const goOnline  = () => setIsOffline(false)
     const goOffline = () => setIsOffline(true)
 
-    window.addEventListener('online', goOnline)
+    window.addEventListener('online',  goOnline)
     window.addEventListener('offline', goOffline)
 
     return () => {
-      window.removeEventListener('online', goOnline)
+      window.removeEventListener('online',  goOnline)
       window.removeEventListener('offline', goOffline)
     }
   }, [])
 
-  // Escuchar reportes
+  // Escuchar reportes filtrados por scope en Firestore
   useEffect(() => {
     setLoading(true)
 
-    const unsubscribe = firestoreService.subscribeToReports(
+    const unsubscribe = firestoreService.subscribeToReportsByScope(
+      scope,
       (data) => {
-
-        const filteredReports = data.filter((report) => {
-
-          // Compatibilidad:
-          // reportes antiguos sin "scope" pertenecen a Nacional.
-          const reportScope = report.scope ?? 'nacional'
-
-          return reportScope === scope
-        })
-
-        setReports(filteredReports)
+        setReports(data)
         setLoading(false)
         setError(null)
       },
