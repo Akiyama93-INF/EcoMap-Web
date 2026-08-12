@@ -16,10 +16,13 @@ El objetivo es facilitar la participación ciudadana en la identificación de pr
 - Navegación con Leaflet y restricción geográfica estricta al territorio salvadoreño
 - Detección de ubicación del usuario con marcador animado de doble pulso
 - Tiles oscuros sincronizados automáticamente con el tema de la aplicación
-- Buscador de lugares con AbortController y debounce optimizado
+- Buscador de lugares con AbortController, debounce optimizado, deduplicación de resultados y filtrado por tipo de entidad
+- **Mapa interno del campus INSA** con plano real en coordenadas CRS.Simple — scope completamente independiente del mapa nacional
 
 ### 📝 Sistema de reportes
 - Creación de reportes con categoría, descripción, ubicación e imagen
+- Pin de ubicación sincronizado en tiempo real con las coordenadas exactas del reporte
+- GPS de alta precisión (`enableHighAccuracy: true`, sin caché) disponible directamente desde el formulario
 - **9 categorías disponibles:**
   - 🗑️ Basurero clandestino
   - ♻️ Punto ecológico
@@ -32,8 +35,8 @@ El objetivo es facilitar la participación ciudadana en la identificación de pr
 - Subtypes por categoría con campos de infraestructura especializados
 - Vista previa de imágenes antes de enviar
 - Validación de archivos: JPG, PNG, WEBP — máximo 5 MB
-- Detección de reportes cercanos (radio de 50 m) para evitar duplicados
-- Coordenadas aproximadas (~400 m) para categorías con privacidad aplicada
+- Detección de reportes cercanos (radio de 30 m) para evitar duplicados
+- Coordenadas exactas para todos los tipos de reporte — los sitios públicos deben ser localizables
 
 ### 📷 Cámara nativa en Android
 - Botón **Tomar foto** — abre la cámara trasera nativa del dispositivo vía `@capacitor/camera`
@@ -51,10 +54,14 @@ Nuevo reporte → Pendiente → Confirmado (votos) → Resuelto
 - 🟢 **Confirmado** — validado por la comunidad
 - 🔵 **Resuelto** — atendido por el creador
 
+El cambio a "Resuelto" solicita confirmación explícita antes de ejecutarse para evitar cierres accidentales.
+
 ### 👥 Sistema colaborativo
 - Confirmaciones comunitarias: un voto por usuario mediante `arrayUnion`
 - Botón contextual según categoría del reporte
 - Control de acciones según propietario del reporte
+- Sistema de comentarios en tiempo real con Firestore subcollections
+- Validación mínima de 3 caracteres en comentarios con contador visible
 
 ### 👤 Perfiles de usuario
 - Nombre de usuario personalizable (displayName)
@@ -78,7 +85,7 @@ Nuevo reporte → Pendiente → Confirmado (votos) → Resuelto
 
 ### 🔒 Seguridad
 - Reglas de Firestore: solo usuarios autenticados pueden crear reportes
-- El `userId` del reporte debe coincidir con el del usuario autenticado
+- Validación de ownership en servidor antes de modificar el estado de un reporte
 - Solo el propietario puede modificar o eliminar su reporte
 - Variables de entorno para todas las credenciales sensibles
 - Restricción geográfica estricta: operación exclusiva dentro de El Salvador
@@ -90,10 +97,11 @@ Nuevo reporte → Pendiente → Confirmado (votos) → Resuelto
 | Área | Tecnología |
 |---|---|
 | Frontend | React 18 + Vite + CSS Variables |
-| Mapa | Leaflet + React Leaflet + OpenStreetMap |
+| Mapa nacional | Leaflet + React Leaflet + OpenStreetMap |
+| Mapa INSA | Leaflet CRS.Simple + plano PNG del campus |
 | Tiles oscuros | CartoDB Dark Matter |
 | Base de datos | Firebase Firestore (tiempo real + offline) |
-| Autenticación | Firebase Auth (email/contraseña) |
+| Autenticación | Firebase Auth (Google + email/contraseña) |
 | Imágenes | Cloudinary |
 | Geolocalización | Nominatim API (limitado a El Salvador) |
 | App móvil | Capacitor 8 + Android Studio |
@@ -114,6 +122,7 @@ src/
 │   ├── useAuth.js
 │   ├── useCameraNative.js
 │   ├── useGeolocation.js
+│   ├── useNominatim.js
 │   ├── useReports.js
 │   ├── useTheme.js
 │   └── useUserProfile.js
@@ -174,6 +183,7 @@ Abrir: `http://localhost:5173`
 ## 🔥 Configuración Firebase
 
 ### Authentication
+- Google (OAuth)
 - Email y contraseña
 
 ### Firestore — colección `reports`
@@ -187,6 +197,7 @@ Abrir: `http://localhost:5173`
   description:       string,
   lat:               number,
   lng:               number,
+  scope:             'nacional' | 'insa',
   imageUrl:          string | null,
   status:            'pending' | 'confirmed' | 'resolved',
   confirmations:     string[],
@@ -204,6 +215,8 @@ Abrir: `http://localhost:5173`
   displayName: string,
   email:       string,
   photoURL:    string | null,
+  createdAt:   timestamp,
+  updatedAt:   timestamp,
 }
 ```
 
@@ -308,8 +321,25 @@ Correo: ecomap.proyecto@gmail.com
 
 ---
 
-## 🌎 EcoMap v3.0.0
+## 📋 Historial de versiones
 
+### 🌎 EcoMap v3.2.0 — 10 de agosto de 2026
+Correcciones de precisión, rendimiento y seguridad.
+
+- Pin de ubicación sincronizado con las coordenadas exactas del reporte
+- Removido el desplazamiento de privacidad en marcadores de sitios públicos — los reportes ahora aparecen en su ubicación real
+- Consulta de reportes filtrada por scope directamente en Firestore (mejora de rendimiento)
+- Buscador de lugares mejorado con deduplicación y filtrado por tipo de entidad
+- Validación de ownership en servidor antes de cambiar el estado de un reporte
+- Corregida doble escritura de `createdAt` en login con Google
+- Confirmación explícita antes de marcar un reporte como resuelto
+- Validación mínima y contador de caracteres en comentarios
+- Radio de detección de duplicados ajustado de 50 m a 30 m
+
+### 🌎 EcoMap v3.1.0
+Mapa interno del campus INSA con CRS.Simple y plano PNG real. Arquitectura dual-scope (nacional / INSA) con estadísticas independientes por alcance. Autenticación con Google OAuth. Notificaciones push con Firebase Cloud Messaging y Capacitor. Sistema de comentarios en tiempo real con subcollections de Firestore. Compartir reportes por WhatsApp. Reverse geocoding con Nominatim. Subida de foto de perfil con Cloudinary.
+
+### 🌎 EcoMap v3.0.0
 Primera versión completa con APK Android, cámara nativa, perfiles con foto, modo oscuro total, 9 categorías de reporte incluyendo infraestructura urbana, sistema colaborativo de confirmaciones y seguridad de producción.
 
 Construido para facilitar la participación ciudadana y mejorar la gestión de problemas ambientales en El Salvador.
