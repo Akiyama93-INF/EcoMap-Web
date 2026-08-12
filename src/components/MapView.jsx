@@ -320,34 +320,34 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
     }
   }
 
+  const descTruncada = marker.description && marker.description.length > 80
+    ? marker.description.slice(0, 80).trimEnd() + '…'
+    : marker.description
+
   return (
-    <div className="popup-content">
-      <div className="popup-category-badge" style={{ backgroundColor: color }}>
-        <span>{cat?.icon ?? '📍'}</span>
-        <span>{marker.category}</span>
+    <div className="popup-content popup-content--compact">
+      {/* Encabezado: icono + categoría + imagen thumbnail */}
+      <div className="popup-compact-header">
+        <div className="popup-category-badge" style={{ backgroundColor: color }}>
+          <span>{cat?.icon ?? '📍'}</span>
+          <span>{marker.category}</span>
+        </div>
+        {marker.imageUrl && (
+          <img src={marker.imageUrl} alt="" className="popup-thumb" />
+        )}
       </div>
 
-      {marker.imageUrl && (
-        <img src={marker.imageUrl} alt="Reporte" className="popup-img" />
+      {/* Descripción truncada */}
+      {descTruncada && (
+        <p className="popup-description popup-description--compact">{descTruncada}</p>
       )}
 
-      <p className="popup-description">{marker.description}</p>
-
-      {subtypeLabels.length > 0 && (
-        <div className="popup-subtypes">
-          {subtypeLabels.map((l) => (
-            <span key={l} className="popup-subtype-chip">{l}</span>
-          ))}
-        </div>
-      )}
-
-      <div className="popup-meta">
+      {/* Meta en línea */}
+      <div className="popup-meta popup-meta--compact">
         <span>👤 {marker.userName ?? 'Anónimo'}</span>
         <span>📅 {fecha}</span>
         {localCount > 0 && (
-          <span className="popup-confirmations">
-            ✅ {localCount} confirmación{localCount !== 1 ? 'es' : ''}
-          </span>
+          <span className="popup-confirmations">✅ {localCount}</span>
         )}
       </div>
 

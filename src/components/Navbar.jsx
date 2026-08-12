@@ -45,7 +45,8 @@ function Navbar() {
             className="navbar-logo-img"
           />
           <span className="navbar-logo-text">
-            EcoMap - Juntos por un El Salvador más limpio
+            <span className="navbar-logo-full">EcoMap - Juntos por un El Salvador más limpio</span>
+            <span className="navbar-logo-short">EcoMap</span>
           </span>
         </Link>
 

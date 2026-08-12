@@ -47,6 +47,10 @@
   letter-spacing: -0.02em;
 }
 
+.navbar-logo-short {
+  display: none;
+}
+
 /* Menú */
 .navbar-menu {
   display: flex;
@@ -129,25 +133,81 @@
 }
 
 @media (max-width: 768px) {
+  /* Contenedor: una sola fila, altura automática */
   .navbar-container {
     height: auto;
-    padding: 0.6rem 1rem;
-    flex-wrap: wrap;
+    min-height: 56px;
+    padding: 0.5rem 0.75rem;
+    flex-wrap: nowrap;
     gap: 0.5rem;
+    align-items: center;
   }
 
-  .navbar-menu {
-    gap: 0.75rem;
-    width: 100%;
-    justify-content: flex-end;
+  /* Logo: texto corto en móvil */
+  .navbar-logo {
+    flex-shrink: 0;
+  }
+
+  .navbar-logo-full {
+    display: none;
+  }
+
+  .navbar-logo-short {
+    display: inline;
   }
 
   .navbar-logo-text {
     font-size: 1.1rem;
   }
 
+  /* Menú: no envuelve, scroll silencioso si no cabe */
+  .navbar-menu {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .navbar-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navbar-link {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .navbar-btn {
+    font-size: 0.78rem;
+    padding: 0.28rem 0.6rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .theme-btn {
+    padding: 0.25rem 0.45rem;
+    font-size: 0.9rem;
+  }
+
   .navbar-user {
-    max-width: 130px;
+    max-width: 80px;
+    font-size: 0.76rem;
+  }
+}
+
+/* Honor X6C y pantallas muy angostas */
+@media (max-width: 400px) {
+  .navbar-link {
+    font-size: 0.74rem;
+  }
+
+  .navbar-btn {
+    font-size: 0.72rem;
+    padding: 0.22rem 0.45rem;
   }
 }
 .navbar-user-link {
