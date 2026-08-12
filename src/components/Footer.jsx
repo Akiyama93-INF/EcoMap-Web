@@ -9,7 +9,7 @@ function Footer() {
       <div className="footer-container">
         <div className="footer-section">
           <h3>EcoMap</h3>
-          <p>EcoMap es una plataforma colaborativa para el reporte y visualización de incidencias ambientales en El Salvador. Desarrollada por estudiantes del Instituto Nacional de Santa Ana (INSA) como proyecto tecnológico para fomentar la participación ciudadana y el cuidado del medio ambiente.
+          <p>EcoMap es una plataforma colaborativa que permite reportar, confirmar y visualizar incidencias ambientales en El Salvador. Desarrollada por estudiantes del Instituto Nacional de Santa Ana (INSA) para impulsar la participación ciudadana en la protección del medio ambiente.
           </p>
         </div>
 

@@ -133,82 +133,71 @@
 }
 
 @media (max-width: 768px) {
-  /* Contenedor: una sola fila, altura automática */
+  /* Dos filas: logo arriba, menú abajo con scroll horizontal */
   .navbar-container {
     height: auto;
-    min-height: 56px;
-    padding: 0.5rem 0.75rem;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
     align-items: center;
   }
 
-  /* Logo: texto corto en móvil */
+  /* Logo ocupa el espacio disponible en fila 1 */
   .navbar-logo {
-    flex-shrink: 0;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
-  .navbar-logo-full {
-    display: none;
-  }
-
-  .navbar-logo-short {
-    display: inline;
-  }
+  .navbar-logo-full { display: none; }
+  .navbar-logo-short { display: inline; }
 
   .navbar-logo-text {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 
-  /* Menú: no envuelve, scroll silencioso si no cabe */
+  /* Menú: fila completa debajo, scroll si no cabe — todos los items visibles */
   .navbar-menu {
-    flex-shrink: 0;
+    width: 100%;
     flex-wrap: nowrap;
-    gap: 0.6rem;
+    gap: 0.5rem;
+    justify-content: flex-start;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 2px;
   }
 
-  .navbar-menu::-webkit-scrollbar {
-    display: none;
-  }
+  .navbar-menu::-webkit-scrollbar { display: none; }
 
   .navbar-link {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .navbar-btn {
-    font-size: 0.78rem;
-    padding: 0.28rem 0.6rem;
+    font-size: 0.8rem;
+    padding: 0.28rem 0.65rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .theme-btn {
-    padding: 0.25rem 0.45rem;
-    font-size: 0.9rem;
+    padding: 0.28rem 0.5rem;
+    flex-shrink: 0;
   }
 
   .navbar-user {
-    max-width: 80px;
-    font-size: 0.76rem;
+    max-width: 130px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    flex-shrink: 1;
   }
 }
 
-/* Honor X6C y pantallas muy angostas */
 @media (max-width: 400px) {
-  .navbar-link {
-    font-size: 0.74rem;
-  }
-
-  .navbar-btn {
-    font-size: 0.72rem;
-    padding: 0.22rem 0.45rem;
-  }
+  .navbar-link { font-size: 0.76rem; }
+  .navbar-btn  { font-size: 0.74rem; padding: 0.22rem 0.5rem; }
 }
 .navbar-user-link {
   display: flex;
