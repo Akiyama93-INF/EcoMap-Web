@@ -72,6 +72,13 @@
   text-decoration: none;
 }
 
+.navbar-link--active {
+  color: var(--primary-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 2px;
+}
+
 .navbar-user {
   color: var(--text-light);
   font-size: 0.875rem;

@@ -2,7 +2,7 @@
 // Muestra displayName en lugar de email, avatar con inicial, enlace a /perfil
 
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import authService from '../firebase/authService'
 import useTheme from '../hooks/useTheme'
 import UserAvatar from './UserAvatar'
@@ -24,6 +24,7 @@ function Navbar() {
   }, [])
 
   const handleLogout = async () => {
+    if (!window.confirm('¿Cerrar sesión?')) return
     try {
       await authService.logout()
     } catch (error) {
@@ -52,17 +53,17 @@ function Navbar() {
 
         <div className="navbar-menu">
 
-<Link to="/nacional" className="navbar-link">
+<NavLink to="/nacional" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
   EcoMap Nacional
-</Link>
+</NavLink>
 
-<Link to="/insa" className="navbar-link">
+<NavLink to="/insa" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
   EcoMap INSA
-</Link>
+</NavLink>
 
-<Link to="/estadisticas" className="navbar-link">
+<NavLink to="/estadisticas" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
   Estadísticas
-</Link>
+</NavLink>
 
           <button
             onClick={toggleTheme}

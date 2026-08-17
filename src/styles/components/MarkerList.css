@@ -320,6 +320,141 @@
   white-space: nowrap;
 }
 
+/* ── Barra de búsqueda ──────────────────────────────────────── */
+.ml-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--input-bg, var(--hover-bg));
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  padding: 0.3rem 0.65rem;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.ml-search-wrapper--focused {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+
+.ml-search-icon {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.ml-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  color: var(--text-color);
+  outline: none;
+  min-width: 0;
+  padding: 0;
+}
+
+.ml-search-input::placeholder {
+  color: var(--text-light);
+}
+
+.ml-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s;
+  box-shadow: none;
+}
+
+.ml-search-clear:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-color);
+  transform: none;
+  box-shadow: none;
+}
+
+.ml-search-hint {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+  opacity: 0.6;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Resaltado de coincidencias */
+.ml-highlight {
+  background-color: color-mix(in srgb, var(--primary-color) 25%, transparent);
+  color: var(--text-color);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Contador con "X de Y" */
+.ml-count-of {
+  font-size: 0.68rem;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ── Estado vacío enriquecido ───────────────────────────────── */
+.ml-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.ml-empty-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.ml-empty-msg {
+  color: var(--text-light);
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ml-empty-clear {
+  background: none;
+  border: 1.5px solid var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 20px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  box-shadow: none;
+  margin-top: 0.25rem;
+}
+
+.ml-empty-clear:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ── Badge de estado en ítem ────────────────────────────────── */
 .marker-status-badge {
   font-size: 0.68rem;

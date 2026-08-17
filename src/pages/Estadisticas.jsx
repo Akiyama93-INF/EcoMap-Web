@@ -234,7 +234,13 @@ function Estadisticas() {
           <div className="est-panel">
             <h2 className="est-panel-titulo">Reportes por categoría</h2>
             {stats.porCategoria.length === 0 ? (
-              <p className="est-vacio">Sin datos aún.</p>
+              <div className="est-empty">
+                <span className="est-empty-icon">🌿</span>
+                <p className="est-empty-msg">Sin reportes aún en este scope.</p>
+                <a href={scope === 'insa' ? '/insa' : '/nacional'} className="est-empty-cta">
+                  Hacer el primer reporte
+                </a>
+              </div>
             ) : (
               <ul className="est-lista">
                 {stats.porCategoria.map((cat) => (
@@ -258,7 +264,11 @@ function Estadisticas() {
                 {scope === 'todos' ? 'Departamentos (Nacional)' : 'Reportes por departamento'}
               </h2>
               {stats.porDepto.length === 0 ? (
-                <p className="est-vacio">Sin datos nacionales aún.</p>
+              <div className="est-empty">
+                <span className="est-empty-icon">📍</span>
+                <p className="est-empty-msg">Sin reportes nacionales aún.</p>
+                <a href="/nacional" className="est-empty-cta">Reportar en el mapa nacional</a>
+              </div>
               ) : (
                 <ul className="est-lista">
                   {stats.porDepto.map(({ nombre, count }) => (
@@ -282,7 +292,11 @@ function Estadisticas() {
                 {scope === 'todos' ? 'Zonas del campus (INSA)' : 'Reportes por zona del campus'}
               </h2>
               {stats.porZonaINSA.length === 0 ? (
-                <p className="est-vacio">Sin datos del campus aún.</p>
+              <div className="est-empty">
+                <span className="est-empty-icon">🏫</span>
+                <p className="est-empty-msg">Sin reportes del campus aún.</p>
+                <a href="/insa" className="est-empty-cta">Reportar en el plano del INSA</a>
+              </div>
               ) : (
                 <ul className="est-lista">
                   {stats.porZonaINSA.map(({ nombre, count }) => (

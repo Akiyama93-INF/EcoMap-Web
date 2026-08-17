@@ -1,6 +1,7 @@
 // App.jsx — Rutas principales de EcoMap
+// v3.2.6: lazy loading de paginas para reducir bundle inicial
 
-import React, { useEffect } from 'react'
+import React, { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -10,15 +11,17 @@ import notificationService from './firebase/notificationService'
 import Navbar        from './components/Navbar'
 import Footer        from './components/Footer'
 import WelcomeModal  from './components/WelcomeModal'
+import Loading       from './components/Loading'
 
-import Home          from './pages/Home'
-import Nacional      from './pages/Nacional'
-import INSA          from './pages/INSA'
-import Login         from './pages/Login'
-import Register      from './pages/Register'
-import Profile       from './pages/Profile'
-import Estadisticas  from './pages/Estadisticas'
-import NotFound      from './pages/NotFound'
+// Paginas cargadas bajo demanda — solo cuando el usuario navega a esa ruta
+const Home         = lazy(() => import('./pages/Home'))
+const Nacional     = lazy(() => import('./pages/Nacional'))
+const INSA         = lazy(() => import('./pages/INSA'))
+const Login        = lazy(() => import('./pages/Login'))
+const Register     = lazy(() => import('./pages/Register'))
+const Profile      = lazy(() => import('./pages/Profile'))
+const Estadisticas = lazy(() => import('./pages/Estadisticas'))
+const NotFound     = lazy(() => import('./pages/NotFound'))
 
 import './styles/App.css'
 
@@ -42,6 +45,7 @@ function App() {
           <WelcomeModal />
 
           <main className="main-content">
+            <Suspense fallback={<Loading message="Cargando..." />}>
             <Routes>
 
               {/* Página principal */}
@@ -63,6 +67,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
 
             </Routes>
+            </Suspense>
           </main>
 
           <Footer />

@@ -3,78 +3,185 @@
 //   - Contador de reportes por categoría en filtros
 //   - Ordenar lista por fecha o confirmaciones
 //   - Compartir reporte por WhatsApp con link directo
+// v3.2.6:
+//   - buildWhatsAppLink: deep link por reportId, mensaje enriquecido
+//   - Búsqueda por texto en tiempo real con resaltado de coincidencias
+//     Busca en: descripción, categoría, nombre de usuario, departamento
+//   - Contador dinámico muestra resultados de búsqueda vs total
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { getCategoryByName, CATEGORIES_ARRAY } from '../utils/categories'
 import '../styles/components/MarkerList.css'
 
 const APP_URL = 'https://ecomapwebproyect.netlify.app'
 
 function buildWhatsAppLink(marker) {
-  const cat = getCategoryByName(marker.category)
+  const cat  = getCategoryByName(marker.category)
   const icon = cat?.icon ?? '📍'
-  const text = `${icon} *Reporte EcoMap*\n*Categoría:* ${marker.category}\n*Descripción:* ${marker.description || 'Sin descripción'}\n*Ver en EcoMap:* ${APP_URL}`
-  return `https://wa.me/?text=${encodeURIComponent(text)}`
+
+  const rawDesc  = marker.description || 'Sin descripción'
+  const desc     = rawDesc.length > 120 ? rawDesc.substring(0, 120) + '...' : rawDesc
+  const confirms = marker.confirmationCount ?? marker.confirmations?.length ?? 0
+  const fecha = marker.createdAt?.toDate
+    ? marker.createdAt.toDate().toLocaleDateString('es-SV', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      })
+    : null
+
+  const link = `${APP_URL}/?reportId=${marker.id}`
+
+  const lines = [
+    `${icon} *Reporte EcoMap*`,
+    `*Categoría:* ${marker.category}`,
+    marker.department ? `*Departamento:* ${marker.department}` : null,
+    `*Descripción:* ${desc}`,
+    confirms > 0 ? `✅ *${confirms} confirmación${confirms !== 1 ? 'es' : ''}*` : null,
+    fecha ? `📅 ${fecha}` : null,
+    `*Ver reporte:* ${link}`,
+  ].filter(Boolean).join('\n')
+
+  return `https://wa.me/?text=${encodeURIComponent(lines)}`
+}
+
+// Resalta las partes del texto que coinciden con la búsqueda
+function Highlight({ text, query }) {
+  if (!query || !text) return <>{text}</>
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part)
+          ? <mark key={i} className="ml-highlight">{part}</mark>
+          : part
+      )}
+    </>
+  )
 }
 
 function MarkerList({ markers = [], onMarkerSelect }) {
   const [activeFilter, setActiveFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('fecha')
+  const [sortBy,       setSortBy]       = useState('fecha')
+  const [searchQuery,  setSearchQuery]  = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+  const inputRef = useRef(null)
 
-  // Conteo por reportType para los filtros
-  const countByType = useMemo(() => {
-    const counts = {}
-    markers.forEach((m) => {
-      const cat = getCategoryByName(m.category)
-      if (cat?.reportType) {
-        counts[cat.reportType] = (counts[cat.reportType] ?? 0) + 1
+  // Atajo de teclado: / enfoca la búsqueda
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault()
+        inputRef.current?.focus()
       }
-    })
-    return counts
-  }, [markers])
+      if (e.key === 'Escape') {
+        setSearchQuery('')
+        inputRef.current?.blur()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
-  // Conteo por categoría individual (id) para mostrar en cada botón de icono
+  const clearSearch = useCallback(() => {
+    setSearchQuery('')
+    inputRef.current?.focus()
+  }, [])
+
+  // Conteo por categoría individual para los filtros
   const countById = useMemo(() => {
     const counts = {}
     markers.forEach((m) => {
       const cat = getCategoryByName(m.category)
-      if (cat?.id) {
-        counts[cat.id] = (counts[cat.id] ?? 0) + 1
-      }
+      if (cat?.id) counts[cat.id] = (counts[cat.id] ?? 0) + 1
     })
     return counts
   }, [markers])
 
+  // Pipeline: filtro por categoría → búsqueda por texto → ordenamiento
   const filtered = useMemo(() => {
-    const base = activeFilter === 'all'
+    // 1. Filtro por categoría
+    let base = activeFilter === 'all'
       ? markers
       : markers.filter((m) => {
           const cat = getCategoryByName(m.category)
           return cat?.id === activeFilter
         })
 
+    // 2. Búsqueda por texto — busca en descripción, categoría, usuario y departamento
+    const q = searchQuery.trim().toLowerCase()
+    if (q) {
+      base = base.filter((m) => {
+        const haystack = [
+          m.description   ?? '',
+          m.category      ?? '',
+          m.userName      ?? '',
+          m.department    ?? '',
+        ].join(' ').toLowerCase()
+        return haystack.includes(q)
+      })
+    }
+
+    // 3. Ordenamiento
     return [...base].sort((a, b) => {
       if (sortBy === 'confirmaciones') {
         const ca = a.confirmationCount ?? a.confirmations?.length ?? 0
         const cb = b.confirmationCount ?? b.confirmations?.length ?? 0
         return cb - ca
       }
-      // Por fecha descendente (más reciente primero)
       const da = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0)
       const db = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0)
       return db - da
     })
-  }, [markers, activeFilter, sortBy])
+  }, [markers, activeFilter, sortBy, searchQuery])
+
+  const isSearching = searchQuery.trim().length > 0
 
   return (
     <div className="marker-list">
       <div className="marker-list-header">
+
+        {/* Título + contador */}
         <h3 className="marker-list-title">
           Reportes
-          <span className="marker-list-count">{filtered.length}</span>
+          <span className="marker-list-count">
+            {isSearching
+              ? <>{filtered.length} <span className="ml-count-of">de {markers.length}</span></>
+              : filtered.length
+            }
+          </span>
         </h3>
 
-        {/* Filtro por categoría */}
+        {/* Barra de búsqueda */}
+        <div className={`ml-search-wrapper${searchFocused ? ' ml-search-wrapper--focused' : ''}`}>
+          <svg className="ml-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            ref={inputRef}
+            type="text"
+            className="ml-search-input"
+            placeholder="Buscar por descripción, categoría, usuario…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            aria-label="Buscar reportes"
+          />
+          {isSearching ? (
+            <button
+              className="ml-search-clear"
+              onClick={clearSearch}
+              aria-label="Limpiar búsqueda"
+              title="Limpiar"
+            >
+              ×
+            </button>
+          ) : (
+            <span className="ml-search-hint" aria-hidden="true">/</span>
+          )}
+        </div>
+
+        {/* Filtros por categoría */}
         <div className="marker-filter">
           <button
             className={`filter-btn${activeFilter === 'all' ? ' active' : ''}`}
@@ -117,10 +224,24 @@ function MarkerList({ markers = [], onMarkerSelect }) {
         </div>
       </div>
 
+      {/* Lista o estados vacíos */}
       {filtered.length === 0 ? (
-        <p className="no-markers">
-          {markers.length === 0 ? 'No hay reportes disponibles' : 'No hay reportes en esta categoría'}
-        </p>
+        <div className="ml-empty">
+          {isSearching ? (
+            <>
+              <span className="ml-empty-icon">🔍</span>
+              <p className="ml-empty-msg">Sin resultados para <strong>"{searchQuery}"</strong></p>
+              <button className="ml-empty-clear" onClick={clearSearch}>Limpiar búsqueda</button>
+            </>
+          ) : (
+            <>
+              <span className="ml-empty-icon">🗺️</span>
+              <p className="ml-empty-msg">
+                {markers.length === 0 ? 'No hay reportes disponibles' : 'No hay reportes en esta categoría'}
+              </p>
+            </>
+          )}
+        </div>
       ) : (
         <ul>
           {filtered.map((marker) => {
@@ -128,6 +249,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
             const color = cat?.color ?? '#7f8c8d'
             const icon  = cat?.icon  ?? '📍'
             const confirmCount = marker.confirmationCount ?? marker.confirmations?.length ?? 0
+            const q = searchQuery.trim()
 
             const fecha = marker.createdAt?.toDate
               ? marker.createdAt.toDate().toLocaleDateString('es-SV', {
@@ -138,6 +260,10 @@ function MarkerList({ markers = [], onMarkerSelect }) {
             const subtypeLabels = (cat?.subtypes ?? [])
               .filter((s) => (marker.subtypes ?? []).includes(s.id))
               .slice(0, 3)
+
+            const descRaw = marker.description
+              ? marker.description.substring(0, 60) + (marker.description.length > 60 ? '...' : '')
+              : 'Sin descripción'
 
             return (
               <li
@@ -154,7 +280,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                 <div className="marker-item-body" onClick={() => onMarkerSelect?.(marker)}>
                   <div className="marker-item-header">
                     <span className="marker-item-badge" style={{ backgroundColor: color + '22', color }}>
-                      {icon} {marker.category}
+                      {icon} <Highlight text={marker.category} query={q} />
                     </span>
                     <div className="marker-item-right">
                       {confirmCount > 0 && (
@@ -171,9 +297,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                   </div>
 
                   <p className="marker-item-desc">
-                    {marker.description
-                      ? marker.description.substring(0, 60) + (marker.description.length > 60 ? '...' : '')
-                      : 'Sin descripción'}
+                    <Highlight text={descRaw} query={q} />
                   </p>
 
                   {subtypeLabels.length > 0 && (
@@ -190,12 +314,11 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                   )}
 
                   <div className="marker-item-footer">
-                    <small>👤 {marker.userName ?? 'Anónimo'}</small>
+                    <small>👤 <Highlight text={marker.userName ?? 'Anónimo'} query={q} /></small>
                     {fecha && <small>📅 {fecha}</small>}
                   </div>
                 </div>
 
-                {/* Botón WhatsApp — no propaga el click al onMarkerSelect */}
                 <div className="marker-item-actions">
                   <a
                     href={buildWhatsAppLink(marker)}

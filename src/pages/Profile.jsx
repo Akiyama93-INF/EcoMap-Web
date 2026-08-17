@@ -10,6 +10,7 @@ import cloudinaryService from '../firebase/cloudinaryService'
 import firestoreService  from '../firebase/firestoreService'
 import authService       from '../firebase/authService'
 import { saveProfile }   from '../firebase/profileService'
+import { getCategoryByName } from '../utils/categories'
 import '../styles/pages/Profile.css'
 
 const MAX_PHOTO_MB = 5
@@ -24,6 +25,7 @@ function Profile() {
   const [success,       setSuccess]       = useState(false)
   const [error,         setError]         = useState(null)
   const [reportCount,   setReportCount]   = useState(null)
+  const [myReports,     setMyReports]     = useState([])
 
   // Foto de perfil
   const [photoPreview,  setPhotoPreview]  = useState(null)   // blob URL temporal
@@ -39,11 +41,12 @@ function Profile() {
     else if (user?.photoURL)  setPhotoPreview(user.photoURL)
   }, [profile, user])
 
-  // Total de reportes del usuario
+  // Reportes propios — query directa, sin descargar todos los reportes
   useEffect(() => {
     if (!user) return
-    firestoreService.getReports().then((all) => {
-      setReportCount(all.filter((r) => r.userId === user.uid).length)
+    firestoreService.getReportsByUser(user.uid).then((own) => {
+      setReportCount(own.length)
+      setMyReports(own)
     })
   }, [user])
 
@@ -231,6 +234,67 @@ function Profile() {
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
+
+        {/* Historial de reportes propios */}
+        {myReports.length > 0 && (
+          <div className="profile-history">
+            <h2 className="profile-history-title">Mis reportes</h2>
+            <ul className="profile-history-list">
+              {myReports.map((r) => {
+                const cat   = getCategoryByName(r.category)
+                const color = cat?.color ?? '#7f8c8d'
+                const fecha = r.createdAt?.toDate
+                  ? r.createdAt.toDate().toLocaleDateString('es-SV', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                    })
+                  : null
+
+                const statusLabel = {
+                  pending:   'Pendiente',
+                  confirmed: 'Confirmado',
+                  resolved:  'Resuelto',
+                }[r.status ?? 'pending'] ?? 'Pendiente'
+
+                const statusColor = {
+                  pending:   '#f39c12',
+                  confirmed: '#27ae60',
+                  resolved:  '#2980b9',
+                }[r.status ?? 'pending'] ?? '#f39c12'
+
+                return (
+                  <li key={r.id} className="profile-history-item">
+                    <span
+                      className="profile-history-stripe"
+                      style={{ backgroundColor: color }}
+                    />
+                    <div className="profile-history-body">
+                      <div className="profile-history-row">
+                        <span className="profile-history-cat" style={{ color }}>
+                          {cat?.icon} {r.category}
+                        </span>
+                        <span
+                          className="profile-history-status"
+                          style={{ color: statusColor }}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <p className="profile-history-desc">
+                        {r.description
+                          ? r.description.substring(0, 80) + (r.description.length > 80 ? '...' : '')
+                          : 'Sin descripción'}
+                      </p>
+                      {fecha && (
+                        <span className="profile-history-fecha">📅 {fecha}</span>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
       </div>
     </div>
   )

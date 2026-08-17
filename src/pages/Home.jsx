@@ -11,6 +11,9 @@
 //     La validación GPS se salta para el plano interno del INSA.
 //   - onLocationChange: el GPS del formulario puede actualizar selectedLocation
 //     y mover el mapa al punto detectado (scope nacional únicamente)
+// v3.2.6:
+//   - Deep link: lee ?reportId al montar (después de que markers estén listos),
+//     hace flyTo al marcador y dispara ecomap:openReport para abrir el popup.
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -72,6 +75,31 @@ function Home({ scope = 'nacional' }) {
     window.addEventListener('ecomap:openReport', handler)
     return () => window.removeEventListener('ecomap:openReport', handler)
   }, [])
+
+  // Deep link — leer ?reportId del URL y abrir el reporte correspondiente
+  // Se ejecuta cuando markers ya están cargados (reportsLoading === false)
+  useEffect(() => {
+    if (reportsLoading || markers.length === 0) return
+
+    const params   = new URLSearchParams(window.location.search)
+    const reportId = params.get('reportId')
+    if (!reportId) return
+
+    const marker = markers.find((m) => m.id === reportId)
+    if (!marker) return
+
+    // Volar al marcador en el mapa
+    setFlyTarget({ lat: marker.lat, lng: marker.lng })
+
+    // Abrir el popup de detalles con un pequeño delay para que el flyTo inicie primero
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('ecomap:openReport', { detail: marker }))
+    }, 600)
+
+    // Limpiar el param del URL sin recargar la página
+    const cleanUrl = window.location.pathname
+    window.history.replaceState(null, '', cleanUrl)
+  }, [reportsLoading, markers])
 
   // Clic en el mapa → validar bounds según scope → iniciar formulario
   const handleMarkerPlace = useCallback((location) => {
