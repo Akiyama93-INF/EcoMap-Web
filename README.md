@@ -1,153 +1,312 @@
 # 🌎 EcoMap — Mapa Ecológico de El Salvador
 
-**EcoMap** es una plataforma web y aplicación Android que permite a ciudadanos reportar, visualizar y gestionar puntos ambientales críticos en El Salvador mediante un mapa interactivo en tiempo real.
+**EcoMap** es una plataforma web y aplicación Android que permite a ciudadanos reportar, visualizar, confirmar y dar seguimiento a problemas ambientales e incidencias de infraestructura en El Salvador mediante mapas interactivos.
 
-El objetivo es facilitar la participación ciudadana en la identificación de problemas ambientales, con un sistema organizado de reportes, validaciones comunitarias, imágenes, comentarios, perfiles de usuario y funcionamiento offline.
+El proyecto combina un mapa nacional con un mapa institucional del **Instituto Nacional de Santa Ana (INSA)**, reportes geolocalizados, autenticación, imágenes, participación comunitaria, perfiles de usuario, estadísticas y funciones móviles.
 
-🌐 **Sitio web:** [https://ecomapwebproyect.netlify.app](https://ecomapwebproyect.netlify.app)
+🌐 **Sitio web:** https://ecomapwebproyect.netlify.app  
 📱 **APK Android:** disponible en [Releases](../../releases)
 
 ---
 
 ## ✨ Características principales
 
-### 🗺️ Mapas interactivos
-- Mapa nacional de El Salvador con OpenStreetMap (claro) y CartoDB Dark Matter (oscuro)
-- Navegación con Leaflet y restricción geográfica estricta al territorio salvadoreño
-- Detección de ubicación del usuario con marcador animado de doble pulso
-- Buscador de lugares con debounce, deduplicación y filtrado por tipo de entidad
-- **Mapa interno del campus INSA** con plano real en coordenadas CRS.Simple — scope completamente independiente del mapa nacional
+### 🗺️ Mapas y navegación
 
-### 🔍 Búsqueda en tiempo real
-- Input de búsqueda integrado en la lista de reportes
-- Busca simultáneamente en descripción, categoría, nombre de usuario y departamento
-- **Resaltado visual** de las coincidencias directamente en cada tarjeta
-- Contador dinámico: "3 de 12" cuando hay búsqueda activa
-- Atajo de teclado `/` para enfocar el input, `Escape` para limpiar
-- Estado vacío inteligente con botón para limpiar la búsqueda
+- Mapa nacional basado en **Leaflet + OpenStreetMap**
+- Modo oscuro con tiles **CartoDB Dark Matter**
+- Restricción geográfica de las búsquedas y reportes al territorio de El Salvador
+- Geolocalización del usuario mediante GPS
+- Botón **Usar mi ubicación**
+- Buscador de lugares mediante **Nominatim**
+- Búsqueda con debounce, estados de carga, errores, resultados vacíos y cierre del listado
+- Selección de una ubicación directamente desde los resultados del buscador
+- Marcadores interactivos con información detallada de cada reporte
+- Navegación mediante las rutas `/nacional` y `/insa`
+
+### 🏫 Mapa institucional del INSA
+
+EcoMap cuenta con un segundo ámbito completamente independiente del mapa nacional:
+
+- Plano real del campus del **Instituto Nacional de Santa Ana**
+- Implementado con **Leaflet `CRS.Simple`**
+- Coordenadas internas basadas en el plano del campus
+- Reportes independientes mediante el campo `scope`
+- Categoría específica de **Basura botada**
+- Estadísticas propias del campus
+- Visualización y navegación sin utilizar los tiles geográficos nacionales
 
 ### 📝 Sistema de reportes
-- Creación de reportes con categoría, descripción, ubicación e imagen
-- GPS de alta precisión disponible directamente desde el formulario
-- **9 categorías disponibles:**
-  - 🗑️ Basurero clandestino
-  - ♻️ Punto ecológico
-  - ⚠️ Incidente ambiental
-  - 🏞️ Río contaminado
-  - 💡 Poste de luz dañado
-  - 🚰 Chorro público dañado
-  - 🔧 Tubería dañada
-  - 🚧 Obstrucción vial
-- Subtypes por categoría con campos de infraestructura especializados
-- Detección de reportes cercanos (radio de 30 m) para evitar duplicados
-- Filtros por categoría con contadores y ordenamiento por fecha o confirmaciones
 
-### 📤 Compartir por WhatsApp
-- Botón de WhatsApp en cada tarjeta de reporte
-- **Deep link directo al reporte:** el link abre EcoMap, vuela al marcador y abre el popup automáticamente
-- Mensaje enriquecido con categoría, departamento, confirmaciones, fecha y descripción truncada
-- Al abrir el deep link, el param `?reportId=` se limpia del URL con `history.replaceState`
+Los usuarios autenticados pueden crear reportes indicando:
 
-### 🔄 Ciclo de vida de reportes
+- Categoría
+- Subtipo, cuando corresponde
+- Descripción
+- Ubicación
+- Fotografía opcional
 
+Características del formulario:
+
+- GPS de alta precisión
+- Selección de ubicación sobre el mapa
+- Vista previa de imágenes
+- Validación de JPG, PNG y WEBP
+- Tamaño máximo de imagen de 5 MB
+- Detección de reportes cercanos para reducir duplicados
+- Campos especializados para determinados tipos de infraestructura
+- Subtipos específicos para puntos ecológicos, ríos, postes, chorros públicos, tuberías y obstrucciones viales
+
+### 📋 Categorías nacionales
+
+EcoMap dispone actualmente de **8 categorías nacionales**:
+
+- 🗑️ Basurero clandestino
+- ♻️ Punto ecológico
+- ⚠️ Incidente ambiental
+- 🏞️ Río contaminado
+- 💡 Poste de luz dañado
+- 🚰 Chorro público dañado
+- 🔧 Tubería dañada
+- 🚧 Obstrucción vial
+
+El mapa institucional del INSA utiliza además una categoría exclusiva:
+
+- 🗑️ Basura botada
+
+### 🔄 Estado y seguimiento de reportes
+
+Los reportes siguen un flujo de seguimiento comunitario:
+
+```text
+Nuevo reporte → Pendiente → Confirmado → Resuelto
 ```
-Nuevo reporte → Pendiente → Confirmado (votos) → Resuelto
-```
 
-- 🟡 **Pendiente** — recién creado
-- 🟢 **Confirmado** — validado por la comunidad
-- 🔵 **Resuelto** — atendido por el creador
+- 🟡 **Pendiente** — reporte recién creado o todavía sin suficientes confirmaciones
+- 🟢 **Confirmado** — la comunidad ha validado que el problema continúa presente
+- 🔵 **Resuelto** — el propietario del reporte lo marca como atendido
 
-El cambio a "Resuelto" solicita confirmación explícita antes de ejecutarse.
+El sistema valida que el usuario sea propietario antes de modificar el estado de un reporte.
 
-### 👥 Sistema colaborativo
-- Confirmaciones comunitarias: un voto por usuario
-- Sistema de comentarios en tiempo real con Firestore subcollections
-- Eliminación de comentarios propios
-- Validación mínima de 3 caracteres con contador visible
+### 👥 Participación comunitaria
+
+- Confirmaciones de reportes mediante un voto por usuario
+- Contador de confirmaciones
+- Prevención de confirmaciones duplicadas
+- Comentarios en tiempo real mediante subcolecciones de Firestore
+- Nombre y fotografía del autor en los comentarios
+- Eliminación de comentarios únicamente por su autor
+- Validación mínima de caracteres al publicar comentarios
+- Información temporal del estado del reporte
+- Dirección obtenida mediante reverse geocoding cuando está disponible
+- Barra visual con fotografía, ubicación y confirmaciones
 
 ### 👤 Perfiles de usuario
-- Nombre de usuario personalizable
-- Foto de perfil con upload a Cloudinary, sincronizada en Firebase Auth y Firestore
-- Avatar con inicial del nombre como fallback
-- **Historial de reportes propios** con estado, descripción y fecha — cargado con query directa sin descargar toda la base de datos
-- Contador de reportes enviados
 
-### 📊 Panel de estadísticas
-- Vista por scope: Nacional, INSA o combinada
-- Tarjetas de totales: pendientes, confirmados, resueltos con tasas
-- Barras por categoría y departamento (nacional) / zonas del campus (INSA)
-- Reporte más confirmado destacado
-- Estado vacío con CTA que lleva al mapa correspondiente
+La sección `/perfil` permite:
 
-### 🌙 Modo oscuro completo
-- Tema global con `ThemeContext`
-- Tiles del mapa cambian automáticamente
-- Variables CSS para todos los colores incluyendo popups de Leaflet
+- Personalizar el nombre mostrado
+- Cambiar la fotografía de perfil
+- Subir la fotografía directamente a Cloudinary
+- Sincronizar `photoURL` y `displayName` con Firebase
+- Mostrar avatar con inicial como fallback
+- Consultar el historial de reportes propios
 
-### 📶 Modo offline
-- Firebase IndexedDB Persistence: reportes disponibles sin internet
-- Sincronización automática al reconectarse
-- Banner de aviso y validación que impide subir imágenes sin conexión
+#### 📊 Tu contribución
+
+El perfil incluye estadísticas personales:
+
+- Reportes enviados
+- Reportes pendientes
+- Reportes confirmados
+- Reportes resueltos
+- Confirmaciones recibidas de otros usuarios
+- Mensaje de contribución basado en la actividad realizada
+
+### 📈 Estadísticas
+
+La sección `/estadisticas` permite analizar los reportes por ámbito:
+
+- **Nacional**
+- **INSA**
+- **Todos**
+
+Para el ámbito nacional se muestran datos agrupados por departamentos de El Salvador.
+
+Para INSA se utilizan zonas internas del plano del campus.
+
+Cuando se selecciona **Todos**, las estadísticas combinan los reportes nacionales e institucionales manteniendo identificado su ámbito de origen.
+
+### 👋 Experiencia de bienvenida
+
+EcoMap incorpora un modal de bienvenida para visitantes nuevos.
+
+El modal explica:
+
+1. Cómo seleccionar la ubicación de un problema
+2. Cómo describir y fotografiar el reporte
+3. Cómo participar mediante confirmaciones comunitarias
+
+El visitante puede:
+
+- Crear una cuenta gratuitamente
+- Continuar explorando el mapa sin registrarse
+
+La bienvenida se muestra una sola vez por navegador utilizando `localStorage`.
+
+### 🔐 Autenticación
+
+Se admiten dos métodos:
+
+- Correo electrónico y contraseña
+- Google OAuth
+
+El registro mediante correo incluye:
+
+- Nombre
+- Correo electrónico
+- Contraseña
+- Confirmación de contraseña
+- Validación de campos obligatorios
+- Validación de nombre mínimo
+- Validación de contraseña mínima
+- Comprobación de coincidencia de contraseñas
 
 ### 📷 Cámara nativa en Android
-- Tomar foto con cámara trasera nativa vía `@capacitor/camera`
-- Galería con selector del sistema
-- Fallback automático a `input[capture]` en navegador web
+
+- Botón **Tomar foto** mediante `@capacitor/camera`
+- Acceso a la galería del dispositivo
+- Fallback mediante `input[capture=environment]` en navegador
+- Detección automática de plataforma nativa o web
+
+### 🔔 Notificaciones móviles
+
+En Android se utiliza **Firebase Cloud Messaging** mediante Capacitor para:
+
+- Solicitar permiso de notificaciones
+- Registrar el dispositivo
+- Guardar el token FCM asociado al usuario
+- Recibir notificaciones en primer plano
+- Detectar cuando una notificación es seleccionada
+
+### 🌙 Modo oscuro
+
+- Tema global mediante `ThemeContext`
+- Cambio automático de tiles del mapa
+- Variables CSS para mantener la interfaz consistente
+- Popups, formularios, navegación y componentes adaptados al tema
+
+### 📶 Funcionamiento con conectividad limitada
+
+- Suscripciones de Firestore mediante `onSnapshot`
+- Datos de Firestore disponibles mediante su mecanismo de persistencia cuando está configurado
+- Indicador visual cuando el dispositivo está sin conexión
+- Prevención de nuevos envíos de imágenes cuando no hay conexión
+
+### ⚡ Rendimiento
+
+A partir de v3.2.6, las páginas principales se cargan mediante **lazy loading**:
+
+- `Home`
+- `Nacional`
+- `INSA`
+- `Login`
+- `Register`
+- `Profile`
+- `Estadisticas`
+- `NotFound`
+
+Esto reduce el contenido que debe cargarse inicialmente y permite descargar cada página cuando realmente se necesita.
 
 ### 🔒 Seguridad
-- Reglas de Firestore: solo usuarios autenticados pueden crear reportes
-- Validación de ownership en servidor antes de modificar el estado
-- Variables de entorno para todas las credenciales
-- Restricción geográfica estricta a El Salvador
+
+- Reglas de Firestore para controlar operaciones de usuarios autenticados
+- Validación de ownership antes de modificar estados
+- Solo el propietario puede modificar o eliminar su reporte
+- Solo el autor puede eliminar sus propios comentarios
+- Credenciales mediante variables de entorno
+- Restricción geográfica de la operación nacional a El Salvador
+- Validaciones tanto en la interfaz como en las operaciones de Firebase
 
 ---
 
-## 🛠️ Tecnologías
+## 🛠️ Tecnologías utilizadas
 
 | Área | Tecnología |
 |---|---|
-| Frontend | React 18 + Vite + CSS Variables |
+| Frontend | React 18 + Vite |
+| Enrutamiento | React Router DOM |
+| Estilos | CSS / CSS Variables |
 | Mapa nacional | Leaflet + React Leaflet + OpenStreetMap |
-| Mapa INSA | Leaflet CRS.Simple + plano PNG del campus |
+| Mapa INSA | Leaflet `CRS.Simple` + plano PNG |
 | Tiles oscuros | CartoDB Dark Matter |
-| Base de datos | Firebase Firestore (tiempo real + offline) |
-| Autenticación | Firebase Auth (Google + email/contraseña) |
+| Base de datos | Firebase Firestore |
+| Autenticación | Firebase Authentication |
 | Imágenes | Cloudinary |
-| Geolocalización | Nominatim API (limitado a El Salvador) |
-| App móvil | Capacitor 8 + Android Studio |
-| Cámara nativa | @capacitor/camera |
-| Notificaciones | Firebase Cloud Messaging + @capacitor/push-notifications |
+| Geolocalización / búsqueda | Nominatim API |
+| Aplicación móvil | Capacitor 8 + Android |
+| Cámara | `@capacitor/camera` |
+| Notificaciones | `@capacitor/push-notifications` |
+| Build | Vite |
 
 ---
 
 ## 📁 Estructura del proyecto
 
-```
-src/
-├── components/           # Componentes reutilizables
-│   ├── map/              # SearchBar, LocationButton, MapFlyTo, MapControls
-│   ├── MarkerList.jsx    # Lista de reportes con búsqueda y filtros
-│   ├── ReportForm.jsx    # Formulario de creación de reportes
-│   ├── ReportPopup.jsx   # Modal de detalle con comentarios
-│   ├── Navbar.jsx        # Navegación con NavLink activo
-│   └── ...
-├── context/              # ThemeContext — tema global
-├── firebase/             # Config, Auth, Firestore, Cloudinary, Notifications
-├── hooks/                # useAuth, useReports, useTheme, useCameraNative...
-├── pages/
-│   ├── Home.jsx          # Mapa + sidebar (scope nacional o INSA)
-│   ├── Nacional.jsx      # Scope nacional
-│   ├── INSA.jsx          # Scope campus INSA
-│   ├── Estadisticas.jsx  # Panel de estadísticas dual-scope
-│   ├── Profile.jsx       # Perfil con historial de reportes
-│   ├── Login.jsx
-│   ├── Register.jsx
-│   └── NotFound.jsx      # 404 con identidad de EcoMap
-├── styles/               # CSS globales y por componente
-├── utils/                # categories.js, privacy.js, helpers.js
-├── App.jsx               # Rutas con lazy loading y Suspense
-└── main.jsx
+```text
+EcoMap-Web/
+├── android/                  # Proyecto Android de Capacitor
+├── public/
+│   └── insa-campus-map.png   # Plano del campus INSA
+├── src/
+│   ├── components/
+│   │   ├── map/              # Controles y funciones del mapa nacional
+│   │   ├── INSAMapView.jsx   # Mapa institucional INSA
+│   │   ├── MapView.jsx       # Mapa nacional
+│   │   ├── ReportForm.jsx    # Formulario de reportes
+│   │   ├── ReportPopup.jsx   # Detalle y seguimiento del reporte
+│   │   ├── WelcomeModal.jsx  # Bienvenida inicial
+│   │   └── ...
+│   ├── context/
+│   │   └── ThemeContext.jsx
+│   ├── firebase/
+│   │   ├── authService.js
+│   │   ├── cloudinaryService.js
+│   │   ├── firestoreService.js
+│   │   ├── notificationService.js
+│   │   ├── profileService.js
+│   │   └── ...
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useCameraNative.js
+│   │   ├── useGeolocation.js
+│   │   ├── useNominatim.js
+│   │   ├── useReports.js
+│   │   ├── useTheme.js
+│   │   └── useUserProfile.js
+│   ├── pages/
+│   │   ├── Home.jsx
+│   │   ├── Nacional.jsx
+│   │   ├── INSA.jsx
+│   │   ├── Estadisticas.jsx
+│   │   ├── Profile.jsx
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
+│   │   └── NotFound.jsx
+│   ├── styles/
+│   │   ├── components/
+│   │   └── pages/
+│   ├── utils/
+│   │   ├── categories.js
+│   │   ├── constants.js
+│   │   ├── helpers.js
+│   │   └── privacy.js
+│   ├── App.jsx
+│   └── main.jsx
+├── capacitor.config.ts
+├── package.json
+├── package-lock.json
+└── README.md
 ```
 
 ---
@@ -155,22 +314,26 @@ src/
 ## 📦 Instalación
 
 ### Requisitos
+
 - Node.js 18+
 - npm
-- Android Studio (opcional, para APK)
+- Android Studio, únicamente si se desea generar o modificar la aplicación Android
 
-### Clonar repositorio
+### Clonar el repositorio
+
 ```bash
 git clone https://github.com/Akiyama93-INF/EcoMap-Web.git
 cd EcoMap-Web
 ```
 
 ### Instalar dependencias
+
 ```bash
 npm install
 ```
 
 ### Configurar variables de entorno
+
 Crear un archivo `.env` en la raíz:
 
 ```env
@@ -185,51 +348,57 @@ VITE_CLOUDINARY_CLOUD_NAME=
 VITE_CLOUDINARY_UPLOAD_PRESET=
 ```
 
+> `VITE_FIREBASE_STORAGE_BUCKET` forma parte de la configuración del proyecto Firebase, pero las imágenes de EcoMap se almacenan actualmente en **Cloudinary**, no mediante Firebase Storage.
+
 ### Ejecutar en desarrollo
+
 ```bash
 npm run dev
 ```
-Abrir: `http://localhost:5173`
 
----
+Abrir:
 
-## 🚀 Build de producción web
+```text
+http://localhost:5173
+```
+
+### Comprobar el proyecto
+
+Lint:
+
+```bash
+npm run lint
+```
+
+Build de producción:
 
 ```bash
 npm run build
 ```
 
-Netlify detecta el push a `main` y hace el deploy automáticamente.
-
----
-
-## 📱 Build Android (APK firmado)
+Vista previa:
 
 ```bash
-npm run build
-npx cap sync android
+npm run preview
 ```
-
-Desde Android Studio: **Build → Generate Signed Bundle / APK → APK → release**
-
-El APK firmado queda en:
-```
-android/app/release/app-release.apk
-```
-
-**Permisos en AndroidManifest.xml:**
-- `CAMERA` — cámara nativa
-- `READ_MEDIA_IMAGES` — galería (Android 13+)
-- `READ_EXTERNAL_STORAGE` — galería (Android 12 e inferior)
-- `ACCESS_FINE_LOCATION` — geolocalización precisa
-- `ACCESS_COARSE_LOCATION` — geolocalización aproximada
-- `INTERNET` — Firebase y Cloudinary
 
 ---
 
-## 🔥 Estructura Firestore
+## 🔥 Configuración Firebase
 
-### Colección `reports`
+EcoMap utiliza Firebase para autenticación, base de datos en tiempo real y funciones relacionadas con usuarios.
+
+### Authentication
+
+Métodos utilizados:
+
+- Google OAuth
+- Correo electrónico y contraseña
+
+### Firestore — `reports`
+
+Estructura principal:
+
 ```javascript
 {
   userId:            string,
@@ -242,35 +411,178 @@ android/app/release/app-release.apk
   lng:               number,
   scope:             'nacional' | 'insa',
   imageUrl:          string | null,
-  status:            'pending' | 'confirmed' | 'resolved',
+  status:            string,
   confirmations:     string[],
   confirmationCount: number,
   resolvedBy:        string | null,
   resolvedAt:        timestamp | null,
   createdAt:         timestamp,
-  updatedAt:         timestamp,
+  updatedAt:         timestamp
 }
 ```
 
-### Colección `users`
+El campo `scope` permite mantener separados los reportes del mapa nacional y del campus INSA.
+
+### Comentarios
+
+Los comentarios se almacenan como subcolección de cada reporte:
+
+```text
+reports/{reportId}/comments/{commentId}
+```
+
+Estructura:
+
+```javascript
+{
+  userId:    string,
+  userName:  string,
+  photoURL:  string | null,
+  text:      string,
+  createdAt: timestamp
+}
+```
+
+### Firestore — `users`
+
 ```javascript
 {
   displayName: string,
   email:       string,
   photoURL:    string | null,
+  fcmToken:    string | null,
   createdAt:   timestamp,
-  updatedAt:   timestamp,
+  updatedAt:   timestamp
 }
 ```
+
+### Seguridad
+
+Las reglas de Firestore deben configurarse de acuerdo con las operaciones reales de la aplicación. Como mínimo:
+
+- Lectura de reportes según la política pública definida por el proyecto
+- Creación únicamente por usuarios autenticados
+- Validación del propietario al modificar reportes
+- Eliminación únicamente por el propietario
+- Protección de los comentarios frente a modificaciones de otros usuarios
+- Escritura del perfil únicamente por su propietario
+
+---
+
+## ☁️ Configuración Cloudinary
+
+Cloudinary almacena:
+
+- Fotografías de los reportes
+- Fotografías de perfil
+
+Variables necesarias:
+
+```env
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
+```
+
+Las imágenes se suben mediante `cloudinaryService.js` y se utiliza la URL segura (`secure_url`) devuelta por Cloudinary.
+
+---
+
+## 🚀 Build de producción web
+
+```bash
+npm run build
+```
+
+Para probar localmente la versión generada:
+
+```bash
+npm run preview
+```
+
+La aplicación puede desplegarse en servicios compatibles con Vite y React, como Netlify.
+
+---
+
+## 📱 Build Android
+
+EcoMap utiliza Capacitor para empaquetar la aplicación web como aplicación Android.
+
+### Generar la aplicación
+
+```bash
+npm run build
+npx cap sync android
+```
+
+Abrir el proyecto:
+
+```bash
+npx cap open android
+```
+
+Desde Android Studio:
+
+```text
+Build → Generate Signed Bundle / APK → APK
+```
+
+El APK de release se genera normalmente en:
+
+```text
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+### Permisos utilizados
+
+- `CAMERA`
+- `READ_MEDIA_IMAGES`
+- `READ_EXTERNAL_STORAGE` en versiones compatibles
+- `ACCESS_FINE_LOCATION`
+- `ACCESS_COARSE_LOCATION`
+- `INTERNET`
+- Permisos de notificaciones requeridos por la versión de Android y Capacitor
+
+---
+
+## 🧭 Rutas principales
+
+| Ruta | Función |
+|---|---|
+| `/` | Página principal |
+| `/nacional` | Mapa nacional |
+| `/insa` | Mapa institucional INSA |
+| `/estadisticas` | Estadísticas |
+| `/perfil` | Perfil y contribuciones |
+| `/login` | Inicio de sesión |
+| `/register` | Registro |
+| `*` | Página 404 |
 
 ---
 
 ## 🤝 Contribuir
 
-1. Fork del repositorio
-2. Crear rama: `git checkout -b feature/NuevaFuncion`
-3. Commit: `git commit -m "feat: descripción del cambio"`
-4. Pull Request a `main`
+1. Crear un Fork.
+2. Crear una rama:
+
+```bash
+git checkout -b feature/NuevaFuncion
+```
+
+3. Realizar los cambios.
+4. Ejecutar las comprobaciones:
+
+```bash
+npm run lint
+npm run build
+```
+
+5. Crear el commit:
+
+```bash
+git commit -m "feat: descripción del cambio"
+```
+
+6. Enviar un Pull Request.
 
 ---
 
@@ -283,37 +595,62 @@ Este proyecto está bajo la licencia MIT.
 ## 📧 Contacto
 
 **Equipo EcoMap** — Instituto Nacional de Santa Ana (INSA), Especialidad ITSI 2° "H"
+
 Correo: ecomap.proyecto@gmail.com
 
 ---
 
 ## 📋 Historial de versiones
 
-### 🌎 EcoMap v3.3.0 — 16 de agosto de 2026
-Búsqueda en tiempo real, rendimiento y pulido visual.
+### 🌎 EcoMap v3.2.6 — Agosto de 2026
 
-- 🔍 Búsqueda por texto en la lista de reportes con resaltado de coincidencias, atajo `/` y contador dinámico
-- 🔗 WhatsApp con deep link directo al reporte y mensaje enriquecido con departamento, confirmaciones y fecha
-- 📋 Historial de reportes propios en la página de perfil
-- 🗺️ Página 404 con identidad de EcoMap — marcador animado, GPS falso y cuadrícula de mapa
-- 🚀 Lazy loading de todas las páginas con React.lazy + Suspense
-- ✅ NavLink activo en navbar con indicador visual
-- 🌿 Estado vacío enriquecido en Estadísticas con CTA contextual
-- 📉 getReportsByUser en perfil — ya no descarga todos los reportes de Firestore
-- 🌐 SEO mejorado — metatags completas, Open Graph y canonical en index.html
+Actualización centrada en experiencia de usuario, perfiles, seguimiento de reportes, navegación y rendimiento.
+
+- Nuevo **modal de bienvenida** para visitantes nuevos
+- Opción para crear una cuenta o continuar explorando sin registrarse
+- Bienvenida personalizada en la página principal para usuarios autenticados
+- Conteo de reportes propios visible desde la página principal
+- Perfil de usuario ampliado con sección **Tu contribución**
+- Estadísticas personales de reportes pendientes, confirmados y resueltos
+- Conteo de confirmaciones recibidas por los reportes del usuario
+- Cambio y subida de fotografías de perfil mediante Cloudinary
+- Popup de reportes rediseñado con información de estado y contexto temporal
+- Barra visual de respaldo con fotografía, ubicación y confirmaciones
+- Sistema de comentarios en tiempo real dentro de los reportes
+- Visualización del autor y avatar en comentarios
+- Eliminación de comentarios restringida al autor
+- Confirmación explícita antes de marcar un reporte como resuelto
+- Buscador de lugares con estados de carga, error, resultados vacíos y selección mejorada
+- Inicio de sesión y registro con correo electrónico y Google
+- Validaciones adicionales en el formulario de registro
+- Estadísticas separadas para los ámbitos Nacional, INSA y Todos
+- Lazy loading de las páginas principales para reducir la carga inicial
+- Mantenimiento de Cloudinary como almacenamiento de imágenes
+- Actualización general de la estructura y documentación del proyecto
 
 ### 🌎 EcoMap v3.2.0 — 10 de agosto de 2026
+
 Correcciones de precisión, rendimiento y seguridad.
 
 - Pin de ubicación sincronizado con las coordenadas exactas del reporte
-- Consulta de reportes filtrada por scope directamente en Firestore
+- Eliminado el desplazamiento de privacidad en marcadores de sitios públicos
+- Consulta de reportes filtrada por `scope`
 - Buscador de lugares mejorado con deduplicación y filtrado por tipo de entidad
-- Validación de ownership en servidor antes de cambiar el estado de un reporte
+- Validación de ownership antes de cambiar el estado de un reporte
+- Corregida la doble escritura de `createdAt` en login con Google
 - Confirmación explícita antes de marcar un reporte como resuelto
-- Radio de detección de duplicados ajustado a 30 m
+- Validación mínima y contador de caracteres en comentarios
+- Radio de detección de duplicados ajustado de 50 m a 30 m
 
 ### 🌎 EcoMap v3.1.0
-Mapa interno del campus INSA con CRS.Simple. Arquitectura dual-scope. Google OAuth. Notificaciones push con FCM. Comentarios en tiempo real. Compartir por WhatsApp. Reverse geocoding con Nominatim. Foto de perfil con Cloudinary.
+
+Mapa interno del campus INSA con `CRS.Simple` y plano PNG real. Arquitectura dual-scope (nacional / INSA), autenticación con Google OAuth, notificaciones push mediante Firebase Cloud Messaging y Capacitor, sistema de comentarios en tiempo real, compartir reportes por WhatsApp, reverse geocoding con Nominatim y subida de fotografías de perfil con Cloudinary.
 
 ### 🌎 EcoMap v3.0.0
-Primera versión completa con APK Android, cámara nativa, perfiles con foto, modo oscuro, 9 categorías de reporte, sistema colaborativo de confirmaciones y seguridad de producción.
+
+Primera versión completa con APK Android, cámara nativa, perfiles con fotografía, modo oscuro, categorías de reporte de infraestructura urbana, sistema colaborativo de confirmaciones y seguridad de producción.
+
+---
+
+**EcoMap**  
+*Tecnología para identificar, documentar y dar seguimiento a problemas que afectan nuestro entorno.*
