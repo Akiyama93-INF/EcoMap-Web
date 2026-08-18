@@ -79,7 +79,7 @@ function SearchBar({ onLocationSelect }) {
         <input
           type="text"
           className="searchbar-input"
-          placeholder="Buscar lugar en El Salvador..."
+          placeholder="Buscar en El Salvador..."
           value={query}
           onChange={handleChange}
           onFocus={() => results.length > 0 && setOpen(true)}

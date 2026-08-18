@@ -31,7 +31,7 @@ export const MAP_CONFIG = {
 export const ERROR_MESSAGES = {
   LOCATION_REQUIRED: 'Debes seleccionar una ubicación',
   DESCRIPTION_REQUIRED: 'La descripción es requerida',
-  INVALID_EMAIL: 'Email inválido',
+  INVALID_EMAIL: 'Correo electrónico inválido',
   PASSWORD_TOO_SHORT: 'La contraseña debe tener al menos 6 caracteres',
   PASSWORDS_NOT_MATCH: 'Las contraseñas no coinciden',
 }

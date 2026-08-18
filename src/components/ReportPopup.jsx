@@ -303,7 +303,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                   'Esperando validación comunitaria'
                 }
                 {report.status === 'resolved' &&
-                  'Problema atendido'
+                  'Problema resuelto'
                 }
               </span>
             </div>

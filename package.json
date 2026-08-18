@@ -1,7 +1,7 @@
 {
   "name": "ecomap-basureros-el-salvador",
   "private": true,
-  "version": "3.2.5",
+  "version": "3.2.6",
   "type": "module",
   "description": "Plataforma web para reportar basureros clandestinos en El Salvador",
   "scripts": {

@@ -92,14 +92,14 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Correo electrónico</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="tu@email.com"
+              placeholder="tu@correo.com"
               required
             />
           </div>
@@ -118,7 +118,7 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+            <label htmlFor="confirmPassword">Confirmar contraseña</label>
             <input
               type="password"
               id="confirmPassword"

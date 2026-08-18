@@ -308,7 +308,7 @@ function Home({ scope = 'nacional' }) {
                     <p>
                       {scope === 'insa'
                         ? 'Haz clic en el plano del Instituto Nacional de Santa Ana para reportar un punto ambiental.'
-                        : 'Haga clic en el mapa para reportar un punto ambiental en El Salvador.'
+                        : 'Haz clic en el mapa para reportar un punto ambiental en El Salvador.'
                       }
                     </p>
                     <p className="login-prompt">

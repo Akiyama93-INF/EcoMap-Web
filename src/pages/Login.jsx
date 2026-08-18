@@ -20,7 +20,7 @@ function Login() {
     setIsLoading(true)
     try {
       if (!formData.email || !formData.password) {
-        throw new Error('Email y contraseña son requeridos')
+        throw new Error('El correo electrónico y la contraseña son obligatorios')
       }
       await authService.login(formData.email, formData.password)
       navigate('/')
@@ -53,14 +53,14 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Correo Electrónico</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="tu@email.com"
+              placeholder="tu@correo.com"
               required
             />
           </div>

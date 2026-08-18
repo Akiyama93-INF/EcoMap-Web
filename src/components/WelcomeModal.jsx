@@ -26,63 +26,112 @@ function WelcomeModal() {
   if (!visible) return null
 
   return (
-    <div className="wm-overlay" role="dialog" aria-modal="true" aria-label="Bienvenida a EcoMap">
+    <div
+      className="wm-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bienvenida a EcoMap"
+    >
       <div className="wm-card">
 
         {/* Encabezado */}
         <div className="wm-header">
           <span className="wm-globe">🌎</span>
+
           <div>
-            <h2 className="wm-title">¡Hola, bienvenido a EcoMap!</h2>
-            <p className="wm-subtitle">Juntos por un El Salvador más limpio</p>
+            <h2 className="wm-title">
+              ¡Hola, bienvenido a EcoMap!
+            </h2>
+
+            <p className="wm-subtitle">
+              Juntos por un El Salvador más limpio
+            </p>
           </div>
         </div>
 
         {/* Cuerpo */}
         <div className="wm-body">
+
           <p className="wm-intro">
-            EcoMap es una plataforma ciudadana donde cualquier persona puede
-            reportar problemas ambientales en El Salvador — desde basureros
-            clandestinos hasta ríos contaminados — directamente en el mapa.
+            EcoMap es una plataforma ciudadana para reportar problemas
+            ambientales directamente en el mapa. Señala dónde ocurre el
+            problema, describe lo que sucede y ayuda a que la comunidad
+            pueda darle seguimiento.
           </p>
 
           <div className="wm-features">
+
+            {/* Paso 1 */}
             <div className="wm-feature">
               <span className="wm-feature-icon">📍</span>
+
               <div>
-                <strong>Reporta en segundos</strong>
-                <p>Toca el mapa, elige la categoría y describe el problema.</p>
+                <strong>1. Elige dónde ocurre</strong>
+
+                <p>
+                Toca el mapa en el lugar del problema o presiona{' '}
+                <span className="wm-highlight">“Usar mi ubicación”</span>{' '}
+                para marcarlo automáticamente.
+              </p>
               </div>
             </div>
+
+            {/* Paso 2 */}
             <div className="wm-feature">
-              <span className="wm-feature-icon">📷</span>
+              <span className="wm-feature-icon">📝</span>
+
               <div>
-                <strong>Adjunta una foto</strong>
-                <p>Una imagen vale más que mil palabras — toma la foto desde la misma app.</p>
+                <strong>2. Describe el problema</strong>
+
+                <p>
+                  Selecciona una categoría, explica qué ocurre y,
+                  si quieres, agrega una fotografía como evidencia.
+                </p>
               </div>
             </div>
+
+            {/* Paso 3 */}
             <div className="wm-feature">
               <span className="wm-feature-icon">👥</span>
+
               <div>
-                <strong>La comunidad confirma</strong>
-                <p>Otros usuarios pueden validar tus reportes para darles más peso.</p>
+                <strong>3. Ayuda a la comunidad</strong>
+
+                <p>
+                  Envía tu reporte y permite que otros usuarios lo
+                  consulten y confirmen si el problema sigue presente.
+                </p>
               </div>
             </div>
+
           </div>
 
+          {/* Aviso */}
           <p className="wm-cta">
-            Para reportar necesitas una cuenta — es gratis y toma menos de un minuto.
+            💡 <strong>Para reportar necesitas una cuenta</strong> —
+            es gratis y toma menos de un minuto.
           </p>
+
         </div>
 
         {/* Acciones */}
         <div className="wm-actions">
-          <a href="/register" className="wm-btn-register" onClick={handleClose}>
+
+          <a
+            href="/register"
+            className="wm-btn-register"
+            onClick={handleClose}
+          >
             Crear cuenta gratis
           </a>
-          <button className="wm-btn-explore" onClick={handleClose}>
+
+          <button
+            className="wm-btn-explore"
+            onClick={handleClose}
+          >
             Solo quiero explorar el mapa
           </button>
+
         </div>
 
       </div>
