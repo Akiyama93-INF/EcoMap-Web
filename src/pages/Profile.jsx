@@ -1,6 +1,9 @@
-// Página /perfil — editar nombre, foto de perfil y ver total de reportes
-// Foto: se sube a Cloudinary, la URL se guarda en Firestore (users/{uid}.photoURL)
-//       y en Firebase Auth (updateProfile).
+// Página /perfil — v3.4.0
+// Cambios vs v3.3:
+//   - Sección de impacto personal: pendientes, confirmados, resueltos,
+//     confirmaciones realizadas a otros reportes
+//   - Grid de stats expandido a 2x2
+//   - Frase de contribución si hay actividad
 
 import React, { useState, useEffect, useRef } from 'react'
 import useAuth          from '../hooks/useAuth'
@@ -24,12 +27,11 @@ function Profile() {
   const [saving,        setSaving]        = useState(false)
   const [success,       setSuccess]       = useState(false)
   const [error,         setError]         = useState(null)
-  const [reportCount,   setReportCount]   = useState(null)
   const [myReports,     setMyReports]     = useState([])
 
   // Foto de perfil
-  const [photoPreview,  setPhotoPreview]  = useState(null)   // blob URL temporal
-  const [photoFile,     setPhotoFile]     = useState(null)   // File object
+  const [photoPreview,  setPhotoPreview]  = useState(null)
+  const [photoFile,     setPhotoFile]     = useState(null)
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoError,    setPhotoError]    = useState(null)
   const fileInputRef = useRef(null)
@@ -41,14 +43,25 @@ function Profile() {
     else if (user?.photoURL)  setPhotoPreview(user.photoURL)
   }, [profile, user])
 
-  // Reportes propios — query directa, sin descargar todos los reportes
+  // Reportes propios
   useEffect(() => {
     if (!user) return
     firestoreService.getReportsByUser(user.uid).then((own) => {
-      setReportCount(own.length)
       setMyReports(own)
     })
   }, [user])
+
+  // ── Métricas de impacto ──────────────────────────────────────────────────
+  const statsImpacto = React.useMemo(() => {
+    const pendientes  = myReports.filter((r) => (r.status ?? 'pending') === 'pending').length
+    const confirmados = myReports.filter((r) => r.status === 'confirmed').length
+    const resueltos   = myReports.filter((r) => r.status === 'resolved').length
+    // Total de confirmaciones que el usuario recibió en sus reportes
+    const confirmacionesRecibidas = myReports.reduce((acc, r) => {
+      return acc + (r.confirmationCount ?? r.confirmations?.length ?? 0)
+    }, 0)
+    return { total: myReports.length, pendientes, confirmados, resueltos, confirmacionesRecibidas }
+  }, [myReports])
 
   // ── Selección de imagen ──────────────────────────────────────────────────
   const handlePhotoChange = (e) => {
@@ -66,7 +79,6 @@ function Profile() {
 
     setPhotoError(null)
     setPhotoFile(file)
-    // Preview local instantáneo sin esperar upload
     const url = URL.createObjectURL(file)
     setPhotoPreview(url)
   }
@@ -78,17 +90,12 @@ function Profile() {
     setPhotoUploading(true)
     try {
       const photoURL = await cloudinaryService.uploadImage(photoFile)
-
-      // Guarda en Firebase Auth
       await authService.updateUserProfile(displayName || profile?.displayName || '', photoURL)
-
-      // Guarda en Firestore users/{uid}
       await saveProfile(user.uid, {
         displayName: displayName || profile?.displayName || '',
         email: user.email,
         photoURL,
       })
-
       setPhotoPreview(photoURL)
       setPhotoFile(null)
     } catch (err) {
@@ -121,6 +128,7 @@ function Profile() {
   if (loading) return <p className="profile-loading">Cargando perfil...</p>
 
   const name = displayName || user?.email?.split('@')[0] || ''
+  const tieneActividad = statsImpacto.total > 0
 
   return (
     <div className="profile-container">
@@ -139,7 +147,6 @@ function Profile() {
               <UserAvatar name={name} size={72} />
             )}
 
-            {/* Botón de cámara superpuesto */}
             <button
               type="button"
               className="profile-photo-edit-btn"
@@ -166,7 +173,7 @@ function Profile() {
           </div>
         </div>
 
-        {/* Botón de confirmación de foto — solo aparece si hay archivo nuevo */}
+        {/* Confirmación de foto */}
         {photoFile && (
           <div className="profile-photo-confirm">
             <span className="profile-photo-filename">{photoFile.name}</span>
@@ -194,12 +201,37 @@ function Profile() {
 
         {photoError && <p className="profile-error">{photoError}</p>}
 
-        {/* Estadística */}
-        <div className="profile-stats">
-          <div className="profile-stat">
-            <span className="stat-value">{reportCount ?? '—'}</span>
-            <span className="stat-label">Reportes enviados</span>
+        {/* ── Impacto personal ────────────────────────────────────────────── */}
+        <div className="profile-impacto">
+          <h2 className="profile-impacto-title">Tu contribución</h2>
+
+          <div className="profile-stats-grid">
+            <div className="profile-stat-item">
+              <span className="stat-num">{statsImpacto.total}</span>
+              <span className="stat-lbl">Reportes enviados</span>
+            </div>
+            <div className="profile-stat-item profile-stat-item--confirmed">
+              <span className="stat-num">{statsImpacto.confirmados}</span>
+              <span className="stat-lbl">Confirmados</span>
+            </div>
+            <div className="profile-stat-item profile-stat-item--resolved">
+              <span className="stat-num">{statsImpacto.resueltos}</span>
+              <span className="stat-lbl">Resueltos</span>
+            </div>
+            <div className="profile-stat-item profile-stat-item--community">
+              <span className="stat-num">{statsImpacto.confirmacionesRecibidas}</span>
+              <span className="stat-lbl">Confirmaciones recibidas</span>
+            </div>
           </div>
+
+          {tieneActividad && (
+            <p className="profile-impacto-frase">
+              {statsImpacto.resueltos > 0
+                ? `${statsImpacto.resueltos} de tus reportes han sido atendidos. Gracias por contribuir.`
+                : 'Tu participación ayuda a identificar problemas ambientales en la comunidad.'
+              }
+            </p>
+          )}
         </div>
 
         {/* Formulario de nombre */}
@@ -228,7 +260,7 @@ function Profile() {
           </div>
 
           {error   && <p className="profile-error">{error}</p>}
-          {success && <p className="profile-success">¡Perfil actualizado!</p>}
+          {success && <p className="profile-success">Perfil actualizado.</p>}
 
           <button type="submit" disabled={saving} className="submit-btn">
             {saving ? 'Guardando...' : 'Guardar cambios'}

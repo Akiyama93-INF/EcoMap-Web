@@ -1,9 +1,9 @@
-// ReportPopup — v3 + comentarios
-// Añadido:
-//   - Badge de estado (Pendiente / Confirmado / Resuelto)
-//   - Botón para marcar como Resuelto (solo dueño del reporte)
-//   - Dirección aproximada via Nominatim reverse geocoding
-//   - Sección de comentarios en tiempo real con listener de Firestore
+// ReportPopup — v3.4.0
+// Cambios vs v3.3:
+//   - Barra de respaldo visual (foto / ubicación / confirmaciones)
+//   - Estado con contexto temporal ("Confirmado · hace 3 días")
+//   - Indicador de antigüedad del reporte
+//   - Jerarquía visual mejorada en el cuerpo
 
 import React, { useState, useEffect, useRef } from 'react'
 import { getCategoryByName } from '../utils/categories'
@@ -18,6 +18,23 @@ const STATUS_CONFIG = {
 
 function getStatus(report) {
   return STATUS_CONFIG[report.status] ?? STATUS_CONFIG.pending
+}
+
+function tiempoRelativo(date) {
+  if (!date) return null
+  const diff = Date.now() - date.getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 2)   return 'hace un momento'
+  if (mins < 60)  return `hace ${mins} min`
+  if (hours < 24) return `hace ${hours} h`
+  if (days === 1) return 'ayer'
+  if (days < 30)  return `hace ${days} días`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`
+  const years = Math.floor(months / 12)
+  return `hace ${years} ${years === 1 ? 'año' : 'años'}`
 }
 
 function useReverseGeocode(lat, lng) {
@@ -122,6 +139,43 @@ function ComentarioItem({ comentario, currentUserId, reportId, color }) {
   )
 }
 
+// ── Barra de respaldo ────────────────────────────────────────────────────────
+function RespaldoBar({ hasImage, confirmCount }) {
+  const items = [
+    {
+      active: hasImage,
+      icon:   hasImage ? '📷' : '📷',
+      label:  hasImage ? 'Con fotografía' : 'Sin fotografía',
+    },
+    {
+      active: true,
+      icon:   '📍',
+      label:  'Ubicación registrada',
+    },
+    {
+      active: confirmCount > 0,
+      icon:   '👥',
+      label:  confirmCount > 0
+        ? `${confirmCount} ${confirmCount === 1 ? 'confirmación' : 'confirmaciones'}`
+        : 'Sin confirmaciones',
+    },
+  ]
+
+  return (
+    <div className="rp-respaldo">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className={`rp-respaldo-item ${item.active ? 'rp-respaldo-item--active' : 'rp-respaldo-item--inactive'}`}
+        >
+          <span className="rp-respaldo-icon">{item.icon}</span>
+          <span className="rp-respaldo-label">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStatus }) {
   if (!report) return null
 
@@ -130,13 +184,16 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
   const status = getStatus(report)
   const isOwner = currentUserId && currentUserId === report.userId
 
-  const fecha = report.createdAt?.toDate
-    ? report.createdAt.toDate().toLocaleDateString('es-SV', {
+  const fechaDate = report.createdAt?.toDate ? report.createdAt.toDate() : null
+  const fechaLarga = fechaDate
+    ? fechaDate.toLocaleDateString('es-SV', {
         weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
       })
     : 'Fecha no disponible'
+  const fechaRelativa = fechaDate ? tiempoRelativo(fechaDate) : null
 
   const confirmCount = report.confirmationCount ?? report.confirmations?.length ?? 0
+  const hasImage = Boolean(report.imageUrl)
 
   const subtypeLabels = (cat?.subtypes ?? [])
     .filter((s) => (report.subtypes ?? []).includes(s.id))
@@ -144,7 +201,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
 
   const direccion = useReverseGeocode(report.lat, report.lng)
 
-  // ── Comentarios ──────────────────────────────────────────────
+  // ── Comentarios ──────────────────────────────────────────────────────────
   const [confirmingResolve, setConfirmingResolve] = useState(false)
   const [comentarios, setComentarios]     = useState([])
   const [textoNuevo, setTextoNuevo]       = useState('')
@@ -201,35 +258,55 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
           <div className="rp-header-content">
             <span className="rp-icon">{cat?.icon ?? '📍'}</span>
             <div>
-              <p className="rp-type">Reporte</p>
+              <p className="rp-type">Reporte ambiental</p>
               <h3 className="rp-category">{report.category}</h3>
+              {fechaRelativa && (
+                <p className="rp-header-fecha">{fechaRelativa}</p>
+              )}
             </div>
           </div>
           <button className="rp-close" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
 
         {/* Imagen */}
-        {report.imageUrl && (
+        {hasImage && (
           <div className="rp-img-wrapper">
             <img src={report.imageUrl} alt="Fotografía del reporte" className="rp-img" />
           </div>
         )}
 
+        {/* Barra de respaldo */}
+        <RespaldoBar hasImage={hasImage} confirmCount={confirmCount} />
+
         {/* Cuerpo */}
         <div className="rp-body">
 
-          {/* Badge de estado */}
+          {/* Estado + acción de resolución */}
           <div className="rp-status-row">
-            <span
-              className="rp-status-badge"
-              style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}
-            >
-              {report.status === 'pending'   && '🕐'}
-              {report.status === 'confirmed' && '✅'}
-              {report.status === 'resolved'  && '🔵'}
-              {!report.status                && '🕐'}
-              {' '}{status.label}
-            </span>
+            <div className="rp-status-left">
+              <span
+                className="rp-status-badge"
+                style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}
+              >
+                {report.status === 'pending'   && '🕐'}
+                {report.status === 'confirmed' && '✅'}
+                {report.status === 'resolved'  && '🔵'}
+                {!report.status                && '🕐'}
+                {' '}{status.label}
+              </span>
+              {/* Contexto del estado */}
+              <span className="rp-status-context">
+                {report.status === 'confirmed' && confirmCount > 0 &&
+                  `Validado por ${confirmCount} ${confirmCount === 1 ? 'persona' : 'personas'}`
+                }
+                {report.status === 'pending' &&
+                  'Esperando validación comunitaria'
+                }
+                {report.status === 'resolved' &&
+                  'Problema atendido'
+                }
+              </span>
+            </div>
 
             {isOwner && report.status !== 'resolved' && (
               confirmingResolve ? (
@@ -256,7 +333,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                   className="rp-resolve-btn"
                   onClick={() => setConfirmingResolve(true)}
                 >
-                  Marcar como resuelto
+                  Marcar resuelto
                 </button>
               )
             )}
@@ -282,21 +359,6 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
             </section>
           )}
 
-          {/* Confirmaciones */}
-          {confirmCount > 0 && (
-            <section className="rp-section">
-              <h4>Confirmaciones</h4>
-              <div className="rp-confirm-count">
-                <span className="rp-confirm-badge">✅ {confirmCount}</span>
-                <span>
-                  {confirmCount === 1
-                    ? 'persona confirmó que este reporte sigue siendo válido'
-                    : 'personas confirmaron que este reporte sigue siendo válido'}
-                </span>
-              </div>
-            </section>
-          )}
-
           {/* Metadatos */}
           <section className="rp-meta-grid">
             <div className="rp-meta-item">
@@ -305,7 +367,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
             </div>
             <div className="rp-meta-item">
               <span className="rp-meta-label">Fecha</span>
-              <span className="rp-meta-value">📅 {fecha}</span>
+              <span className="rp-meta-value" title={fechaLarga}>📅 {fechaRelativa ?? fechaLarga}</span>
             </div>
 
             <div className="rp-meta-item rp-meta-full">
