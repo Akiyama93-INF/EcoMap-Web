@@ -1,14 +1,13 @@
 // context/ThemeContext.jsx
 // Fuente única de verdad para el tema oscuro/claro de EcoMap
+// El tema sigue automáticamente la preferencia del sistema operativo
 
-import React, { createContext, useState, useEffect } from 'react'
+import React, { createContext, useEffect, useState } from 'react'
 
 export const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('ecomap-theme')
-    if (saved) return saved === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
 
@@ -19,13 +18,17 @@ export function ThemeProvider({ children }) {
     } else {
       root.removeAttribute('data-theme')
     }
-    localStorage.setItem('ecomap-theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  const toggleTheme = () => setIsDark((prev) => !prev)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e) => setIsDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDark }}>
       {children}
     </ThemeContext.Provider>
   )

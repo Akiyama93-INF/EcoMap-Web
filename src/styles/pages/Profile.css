@@ -364,3 +364,24 @@
   padding-top: 0.25rem;
   border-top: 1px solid var(--border-subtle);
 }
+
+/* ── Cerrar sesión ─────────────────────────────────────────────────────────── */
+.profile-logout-btn {
+  width: 100%;
+  padding: 0.7rem;
+  background: transparent;
+  color: var(--danger-color);
+  border: 1.5px solid var(--danger-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-logout-btn:hover {
+  background: var(--danger-color);
+  color: #fff;
+  transform: none;
+  box-shadow: none;
+}

@@ -2,122 +2,107 @@
 // Muestra displayName en lugar de email, avatar con inicial, enlace a /perfil
 
 import React, { useEffect, useState } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import authService from '../firebase/authService'
-import useTheme from '../hooks/useTheme'
 import UserAvatar from './UserAvatar'
 import '../styles/components/Navbar.css'
 
 function Navbar() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  const { isDark, toggleTheme } = useTheme()
+  const location = useLocation()
 
   useEffect(() => {
     const unsubscribe = authService.onAuthChange((currentUser) => {
       setUser(currentUser)
       setLoading(false)
     })
-
     return unsubscribe
   }, [])
 
-  const handleLogout = async () => {
-    if (!window.confirm('¿Cerrar sesión?')) return
-    try {
-      await authService.logout()
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error)
-    }
-  }
-
-  // Nombre a mostrar: displayName → parte del email antes del @
   const displayName = user?.displayName || user?.email?.split('@')[0] || ''
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
+    <>
+      <nav className="navbar">
+        <div className="navbar-container">
 
-        <Link to="/" className="navbar-logo">
-          <img
-            src="/logo.jpg"
-            alt="EcoMap"
-            className="navbar-logo-img"
-          />
-          <span className="navbar-logo-text">
-            <span className="navbar-logo-full">EcoMap - Juntos por un El Salvador más limpio</span>
-            <span className="navbar-logo-short">EcoMap</span>
-          </span>
-        </Link>
+          <Link to="/" className="navbar-logo">
+            <img src="/logo.jpg" alt="EcoMap" className="navbar-logo-img" />
+            <span className="navbar-logo-text">
+              <span className="navbar-logo-full">EcoMap - Juntos por un El Salvador más limpio</span>
+              <span className="navbar-logo-short">EcoMap</span>
+            </span>
+          </Link>
 
-        <div className="navbar-menu">
+          {/* Menu horizontal — solo visible en desktop */}
+          <div className="navbar-menu navbar-menu--desktop">
+            <NavLink to="/nacional" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
+              EcoMap Nacional
+            </NavLink>
+            <NavLink to="/insa" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
+              EcoMap INSA
+            </NavLink>
+            <NavLink to="/estadisticas" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
+              Estadísticas
+            </NavLink>
 
-<NavLink to="/nacional" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
-  EcoMap Nacional
-</NavLink>
-
-<NavLink to="/insa" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
-  EcoMap INSA
-</NavLink>
-
-<NavLink to="/estadisticas" className={({ isActive }) => isActive ? 'navbar-link navbar-link--active' : 'navbar-link'}>
-  Estadísticas
-</NavLink>
-
-          <button
-            onClick={toggleTheme}
-            className="navbar-btn theme-btn"
-            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          >
-            {isDark ? '☀️' : '🌙'}
-          </button>
-
-          {!loading && (
-            <>
-              {user ? (
-                <>
-                  <Link to="/perfil" className="navbar-user-link">
-                    <UserAvatar
-                      name={displayName}
-                      size={32}
-                      photoURL={user?.photoURL}
-                    />
-                    <span className="navbar-user">
-                      {displayName}
-                    </span>
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="navbar-btn logout-btn"
-                  >
-                    Cerrar sesión
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="navbar-link"
-                  >
-                    Iniciar sesión
-                  </Link>
-
-                  <Link
-                    to="/register"
-                    className="navbar-btn register-btn"
-                  >
-                    Registrarse
-                  </Link>
-                </>
-              )}
-            </>
-          )}
+            {!loading && (
+              <>
+                {user ? (
+                  <>
+                    <Link to="/perfil" className="navbar-user-link">
+                      <UserAvatar name={displayName} size={32} photoURL={user?.photoURL} />
+                      <span className="navbar-user">{displayName}</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="navbar-link">Iniciar sesión</Link>
+                    <Link to="/register" className="navbar-btn register-btn">Registrarse</Link>
+                  </>
+                )}
+              </>
+            )}
+          </div>
 
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Barra de navegación inferior — solo visible en móvil */}
+      <nav className="bottom-nav">
+        <NavLink to="/nacional" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
+          <span className="bottom-nav-icon">🗺️</span>
+          <span className="bottom-nav-label">Nacional</span>
+        </NavLink>
+
+        <NavLink to="/insa" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
+          <span className="bottom-nav-icon">🏫</span>
+          <span className="bottom-nav-label">INSA</span>
+        </NavLink>
+
+        <NavLink to="/estadisticas" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
+          <span className="bottom-nav-icon">📊</span>
+          <span className="bottom-nav-label">Estadísticas</span>
+        </NavLink>
+
+        {!loading && (
+          user ? (
+            <NavLink to="/perfil" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
+              <span className="bottom-nav-icon">
+                <UserAvatar name={displayName} size={24} photoURL={user?.photoURL} />
+              </span>
+              <span className="bottom-nav-label">Perfil</span>
+            </NavLink>
+          ) : (
+            <NavLink to="/login" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
+              <span className="bottom-nav-icon">👤</span>
+              <span className="bottom-nav-label">Iniciar sesión</span>
+            </NavLink>
+          )
+        )}
+      </nav>
+    </>
   )
 }
 

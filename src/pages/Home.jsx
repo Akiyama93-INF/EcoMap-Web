@@ -15,7 +15,7 @@
 //   - Deep link: lee ?reportId al montar (después de que markers estén listos),
 //     hace flyTo al marcador y dispara ecomap:openReport para abrir el popup.
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MapView           from '../components/MapView'
 import INSAMapView       from '../components/INSAMapView'
@@ -53,7 +53,7 @@ function Home({ scope = 'nacional' }) {
     refresh
   } = useReports(scope)
   const { isDark } = useTheme()
-
+  const mapSectionRef = useRef(null)
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [showReportForm,   setShowReportForm]   = useState(false)
   const [flyTarget,        setFlyTarget]        = useState(null)
@@ -153,15 +153,16 @@ function Home({ scope = 'nacional' }) {
     }
   }, [user, showReportForm])
 
-  // Selección desde MarkerList → flyTo + abrir popup
+// Selección desde MarkerList → flyTo + abrir popup
   const handleMarkerSelect = useCallback((marker) => {
-    setFlyTarget({ lat: marker.lat, lng: marker.lng })
-    setSelectedMarkerId(marker.id)
-    setTimeout(() => {
-      setSelectedMarkerId(null)
-      setFlyTarget(null)
-    }, 1500)
-  }, [])
+  setFlyTarget({ lat: marker.lat, lng: marker.lng })
+  setSelectedMarkerId(marker.id)
+  mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  setTimeout(() => {
+    setSelectedMarkerId(null)
+    setFlyTarget(null)
+  }, 1500)
+}, [])
 
   // Envío del formulario con mensajes de progreso
   const handleReportSubmit = async (formData, onProgress) => {
@@ -254,7 +255,7 @@ function Home({ scope = 'nacional' }) {
       <div className="home-container">
 
         {/* Mapa — Nacional usa Leaflet/OSM, INSA usa CRS.Simple + plano */}
-        <div className="map-section">
+        <div className="map-section" ref={mapSectionRef}>
           {scope === 'insa' ? (
             <INSAMapView {...mapProps} />
           ) : (

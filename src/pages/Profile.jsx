@@ -327,6 +327,22 @@ function Profile() {
           </div>
         )}
 
+                {/* Cerrar sesión */}
+        <button
+          type="button"
+          className="profile-logout-btn"
+          onClick={async () => {
+            if (!window.confirm('¿Cerrar sesión?')) return
+            try {
+              await authService.logout()
+            } catch (err) {
+              console.error('Error al cerrar sesión:', err)
+            }
+          }}
+        >
+          Cerrar sesión
+        </button>
+
       </div>
     </div>
   )

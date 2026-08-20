@@ -51,14 +51,6 @@ function WelcomeModal() {
 
         {/* Cuerpo */}
         <div className="wm-body">
-
-          <p className="wm-intro">
-            EcoMap es una plataforma ciudadana para reportar problemas
-            ambientales directamente en el mapa. Señala dónde ocurre el
-            problema, describe lo que sucede y ayuda a que la comunidad
-            pueda darle seguimiento.
-          </p>
-
           <div className="wm-features">
 
             {/* Paso 1 */}
