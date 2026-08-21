@@ -60,8 +60,9 @@ const authService = {
     const provider = new GoogleAuthProvider()
 
     if (isCapacitor()) {
-      // En APK el flujo continúa cuando el usuario vuelve a la app.
-      // El resultado se captura en App.jsx con getRedirectResult al montar.
+      provider.setCustomParameters({
+        redirect_uri: 'https://ecomapwebproyect.netlify.app/__/auth/handler',
+      })
       await signInWithRedirect(auth, provider)
       return null // la página se recargará, no hay retorno sincrónico
     }
