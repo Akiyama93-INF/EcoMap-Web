@@ -1,4 +1,7 @@
-// firebase/authService.js
+// firebase/authService.js — v3.4.4
+// Login Google:
+//   - APK/Capacitor: usa @codetrix-studio/capacitor-google-auth (nativo, sin salir a Chrome)
+//   - Web: usa signInWithPopup (flujo normal de Firebase)
 
 import {
   createUserWithEmailAndPassword,
@@ -8,16 +11,14 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
 } from 'firebase/auth'
 import { doc, setDoc, Timestamp } from 'firebase/firestore'
 import { auth, db } from './firebaseInit'
 
 const USERS_COLLECTION = 'users'
 
-// Detecta si la app corre dentro de un WebView de Capacitor (APK)
-// En ese entorno los popups son bloqueados nativamente, por eso se usa redirect
+// Detecta si la app corre dentro de Capacitor (APK)
 const isCapacitor = () =>
   typeof window !== 'undefined' &&
   (window.Capacitor?.isNativePlatform?.() === true ||
@@ -53,21 +54,47 @@ const authService = {
     }
   },
 
-  // Inicio de sesión con Google.
-  // - En APK/Capacitor: usa signInWithRedirect (los popups son bloqueados en WebView)
-  // - En web: usa signInWithPopup (experiencia más fluida)
+  // Login con Google:
+  // - En APK: abre el selector nativo de Google sin salir de la app
+  // - En web: abre popup de Firebase
   async loginWithGoogle() {
-    const provider = new GoogleAuthProvider()
-
     if (isCapacitor()) {
-      provider.setCustomParameters({
-        redirect_uri: 'https://ecomapwebproyect.netlify.app/__/auth/handler',
-      })
-      await signInWithRedirect(auth, provider)
-      return null // la página se recargará, no hay retorno sincrónico
+      try {
+        // Importación dinámica para no romper el build web
+        const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+
+        // Inicializar el plugin con el clientId web
+        await GoogleAuth.initialize({
+          clientId: '424454747908-cbv62dro9sc6vqku3ijkd90cb3o1667d.apps.googleusercontent.com',
+          scopes: ['profile', 'email'],
+          grantOfflineAccess: true,
+        })
+
+        const googleUser = await GoogleAuth.signIn()
+
+        // Construir credencial de Firebase con el idToken del plugin
+        const credential = GoogleAuthProvider.credential(
+          googleUser.authentication.idToken
+        )
+
+        const { user } = await signInWithCredential(auth, credential)
+        await this._upsertGoogleUser(user)
+        return user
+      } catch (error) {
+        if (
+          error.message?.includes('cancelled') ||
+          error.message?.includes('canceled') ||
+          error.message?.includes('dismiss')
+        ) {
+          return null // usuario canceló el selector
+        }
+        throw new Error(this._traducirError(error.code) ?? error.message)
+      }
     }
 
+    // Web — popup normal
     try {
+      const provider = new GoogleAuthProvider()
       const { user } = await signInWithPopup(auth, provider)
       await this._upsertGoogleUser(user)
       return user
@@ -77,23 +104,14 @@ const authService = {
     }
   },
 
-  // Llama esto al montar App para capturar el resultado del redirect en APK
+  // Ya no se necesita con el plugin nativo — se mantiene como no-op
+  // para no romper App.jsx si todavía lo llama alguna versión anterior
   async handleRedirectResult() {
-    try {
-      const result = await getRedirectResult(auth)
-      if (!result) return null
-      await this._upsertGoogleUser(result.user)
-      return result.user
-    } catch (error) {
-      // Si no hay resultado pendiente simplemente retorna null
-      if (error.code === 'auth/no-auth-event') return null
-      throw new Error(this._traducirError(error.code))
-    }
+    return null
   },
 
-  // Crea o actualiza el documento Firestore del usuario de Google
   async _upsertGoogleUser(user) {
-    const userRef  = doc(db, USERS_COLLECTION, user.uid)
+    const userRef = doc(db, USERS_COLLECTION, user.uid)
     const { getDoc } = await import('firebase/firestore')
     const userSnap = await getDoc(userRef)
 
@@ -110,7 +128,6 @@ const authService = {
     )
   },
 
-  // Actualiza displayName en Firebase Auth y Firestore
   async updateUserProfile(displayName) {
     try {
       const user = auth.currentUser
@@ -128,6 +145,15 @@ const authService = {
 
   async logout() {
     try {
+      // Cerrar sesión también en el plugin nativo si está en APK
+      if (isCapacitor()) {
+        try {
+          const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+          await GoogleAuth.signOut()
+        } catch (_) {
+          // Si el plugin no estaba inicializado, ignorar
+        }
+      }
       await signOut(auth)
     } catch (error) {
       throw new Error(`Error al cerrar sesión: ${error.message}`)
