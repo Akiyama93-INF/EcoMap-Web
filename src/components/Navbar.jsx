@@ -1,6 +1,3 @@
-// Navbar — Fase 3
-// Muestra displayName en lugar de email, avatar con inicial, enlace a /perfil
-
 import React, { useEffect, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import authService from '../firebase/authService'
@@ -22,6 +19,12 @@ function Navbar() {
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || ''
 
+  // Solo mostrar el saludo en las páginas del mapa
+  const isMapPage =
+    location.pathname === '/' ||
+    location.pathname === '/nacional' ||
+    location.pathname === '/insa'
+
   return (
     <>
       <nav className="navbar">
@@ -34,6 +37,13 @@ function Navbar() {
               <span className="navbar-logo-short">EcoMap</span>
             </span>
           </Link>
+
+          {/* Saludo — solo visible en móvil cuando hay sesión y se está en el mapa */}
+          {!loading && user && isMapPage && (
+            <span className="navbar-greeting">
+              Hola, {displayName} ¡siempre eres bienvenido! 🌱
+            </span>
+          )}
 
           {/* Menu horizontal — solo visible en desktop */}
           <div className="navbar-menu navbar-menu--desktop">
@@ -50,12 +60,10 @@ function Navbar() {
             {!loading && (
               <>
                 {user ? (
-                  <>
-                    <Link to="/perfil" className="navbar-user-link">
-                      <UserAvatar name={displayName} size={32} photoURL={user?.photoURL} />
-                      <span className="navbar-user">{displayName}</span>
-                    </Link>
-                  </>
+                  <Link to="/perfil" className="navbar-user-link">
+                    <UserAvatar name={displayName} size={32} photoURL={user?.photoURL} />
+                    <span className="navbar-user">{displayName}</span>
+                  </Link>
                 ) : (
                   <>
                     <Link to="/login" className="navbar-link">Iniciar sesión</Link>

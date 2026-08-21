@@ -1,19 +1,9 @@
-// Home — Fase 4 + INSA
-// Añadido:
-//   - Validación de ubicación fuera de El Salvador
-//   - Mensajes de progreso por pasos en handleReportSubmit
-//   - onConfirmExisting para reportes duplicados
-//   - Bienvenida personalizada con nombre y conteo de reportes propios
-// Actualizado:
-//   - isDark desde useTheme pasado a MapView para tiles oscuros
-//   - isOffline desde useReports para mostrar banner sin conexión
-//   - scope === 'insa' → renderiza INSAMapView con CRS.Simple
-//     La validación GPS se salta para el plano interno del INSA.
-//   - onLocationChange: el GPS del formulario puede actualizar selectedLocation
-//     y mover el mapa al punto detectado (scope nacional únicamente)
-// v3.2.6:
-//   - Deep link: lee ?reportId al montar (después de que markers estén listos),
-//     hace flyTo al marcador y dispara ecomap:openReport para abrir el popup.
+// Home — v3.4.3
+// Layout split-screen en móvil:
+//   - Mapa fijo en la mitad superior (45dvh), lista scrolleable en la inferior.
+//   - Ambos paneles visibles simultáneamente — sin tabs, sin scroll de página.
+//   - Seleccionar un item de la lista hace flyTo en el mapa en tiempo real.
+//   - Desktop mantiene el grid de dos columnas sin cambios.
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -31,13 +21,11 @@ import cloudinaryService from '../firebase/cloudinaryService'
 import { getCategoryByName } from '../utils/categories'
 import '../styles/pages/Home.css'
 
-// Límites geográficos de El Salvador — solo aplican al mapa nacional
 const EL_SALVADOR_BOUNDS = {
   minLat: 12.8, maxLat: 14.8,
   minLng: -90.1, maxLng: -87.6,
 }
 
-// Límites del sistema de coordenadas interno del plano INSA (píxeles de imagen)
 const INSA_BOUNDS = {
   minLat: 0, maxLat: 1024,
   minLng: 0, maxLng: 1295,
@@ -54,6 +42,7 @@ function Home({ scope = 'nacional' }) {
   } = useReports(scope)
   const { isDark } = useTheme()
   const mapSectionRef = useRef(null)
+
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [showReportForm,   setShowReportForm]   = useState(false)
   const [flyTarget,        setFlyTarget]        = useState(null)
@@ -61,7 +50,6 @@ function Home({ scope = 'nacional' }) {
   const [openReport,       setOpenReport]       = useState(null)
   const [confirmError,     setConfirmError]     = useState(null)
 
-  // Conteo de reportes propios — calculado desde markers ya cargados
   const myReportCount = useMemo(() => {
     if (!user) return 0
     return markers.filter((m) => m.userId === user.uid).length
@@ -69,15 +57,12 @@ function Home({ scope = 'nacional' }) {
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || ''
 
-  // Abrir modal de detalles desde botón del popup del mapa
   useEffect(() => {
     const handler = (e) => setOpenReport(e.detail)
     window.addEventListener('ecomap:openReport', handler)
     return () => window.removeEventListener('ecomap:openReport', handler)
   }, [])
 
-  // Deep link — leer ?reportId del URL y abrir el reporte correspondiente
-  // Se ejecuta cuando markers ya están cargados (reportsLoading === false)
   useEffect(() => {
     if (reportsLoading || markers.length === 0) return
 
@@ -88,20 +73,15 @@ function Home({ scope = 'nacional' }) {
     const marker = markers.find((m) => m.id === reportId)
     if (!marker) return
 
-    // Volar al marcador en el mapa
     setFlyTarget({ lat: marker.lat, lng: marker.lng })
 
-    // Abrir el popup de detalles con un pequeño delay para que el flyTo inicie primero
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('ecomap:openReport', { detail: marker }))
     }, 600)
 
-    // Limpiar el param del URL sin recargar la página
-    const cleanUrl = window.location.pathname
-    window.history.replaceState(null, '', cleanUrl)
+    window.history.replaceState(null, '', window.location.pathname)
   }, [reportsLoading, markers])
 
-  // Clic en el mapa → validar bounds según scope → iniciar formulario
   const handleMarkerPlace = useCallback((location) => {
     const { lat, lng } = location
 
@@ -109,9 +89,7 @@ function Home({ scope = 'nacional' }) {
       if (
         lat < INSA_BOUNDS.minLat || lat > INSA_BOUNDS.maxLat ||
         lng < INSA_BOUNDS.minLng || lng > INSA_BOUNDS.maxLng
-      ) {
-        return
-      }
+      ) return
     } else {
       if (
         lat < EL_SALVADOR_BOUNDS.minLat || lat > EL_SALVADOR_BOUNDS.maxLat ||
@@ -130,41 +108,34 @@ function Home({ scope = 'nacional' }) {
     }
   }, [user, navigate, scope])
 
-  // GPS del formulario → actualiza selectedLocation + vuela el mapa al punto
-  // Solo aplica en scope nacional; en INSA no hay GPS real
   const handleLocationChange = useCallback((location) => {
     const { lat, lng } = location
-
-    // Validar que la posición GPS esté dentro de El Salvador
     if (
       lat < EL_SALVADOR_BOUNDS.minLat || lat > EL_SALVADOR_BOUNDS.maxLat ||
       lng < EL_SALVADOR_BOUNDS.minLng || lng > EL_SALVADOR_BOUNDS.maxLng
-    ) {
-      // No bloqueamos con alert — el ReportForm ya mostrará el error de GPS
-      return
-    }
+    ) return
 
     setSelectedLocation({ lat, lng })
     setFlyTarget({ lat, lng })
 
-    // Abrir formulario si el usuario está autenticado y no está ya abierto
     if (user && !showReportForm) {
       setShowReportForm(true)
     }
   }, [user, showReportForm])
 
-// Selección desde MarkerList → flyTo + abrir popup
+  // Selección desde MarkerList — flyTo en tiempo real sin cambiar de vista.
+  // El mapa siempre está visible (split-screen), solo se necesita el flyTo
+  // y el highlight temporal del marcador seleccionado.
   const handleMarkerSelect = useCallback((marker) => {
-  setFlyTarget({ lat: marker.lat, lng: marker.lng })
-  setSelectedMarkerId(marker.id)
-  mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  setTimeout(() => {
-    setSelectedMarkerId(null)
-    setFlyTarget(null)
-  }, 1500)
-}, [])
+    setFlyTarget({ lat: marker.lat, lng: marker.lng })
+    setSelectedMarkerId(marker.id)
 
-  // Envío del formulario con mensajes de progreso
+    setTimeout(() => {
+      setSelectedMarkerId(null)
+      setFlyTarget(null)
+    }, 1800)
+  }, [])
+
   const handleReportSubmit = async (formData, onProgress) => {
     try {
       let imageUrl = null
@@ -182,16 +153,11 @@ function Home({ scope = 'nacional' }) {
       await firestoreService.createReport({
         userId:      user.uid,
         userName:    user.displayName ?? user.email,
-
-        // Nacional o INSA — determina la colección lógica del reporte
-        scope:       scope,
-
+        scope,
         category:    formData.category,
         reportType:  cat?.reportType ?? 'citizen',
         subtypes:    formData.subtypes ?? [],
         description: formData.description,
-        // Para INSA: coordenadas internas del plano (0–1024, 0–1295)
-        // Para Nacional: coordenadas GPS reales de El Salvador
         lat:         formData.location.lat,
         lng:         formData.location.lng,
         imageUrl,
@@ -210,7 +176,6 @@ function Home({ scope = 'nacional' }) {
     }
   }
 
-  // Confirmación colaborativa
   const handleConfirmReport = useCallback(async (reportId) => {
     if (!user) { navigate('/login'); return }
     setConfirmError(null)
@@ -231,7 +196,6 @@ function Home({ scope = 'nacional' }) {
 
   if (authLoading || reportsLoading) return <Loading message="Iniciando EcoMap..." />
 
-  // Props comunes para ambos mapas
   const mapProps = {
     onMarkerPlace:   handleMarkerPlace,
     markers,
@@ -242,10 +206,18 @@ function Home({ scope = 'nacional' }) {
     showReportForm,
   }
 
+  const sidebarContent = (
+    <>
+      {confirmError && (
+        <div className="warning-message">{confirmError}</div>
+      )}
+
+      <MarkerList markers={markers} onMarkerSelect={handleMarkerSelect} />
+    </>
+  )
+
   return (
     <div className="home">
-
-      {/* Banner de modo offline */}
       {isOffline && (
         <div className="offline-banner">
           Sin conexión — mostrando datos en caché. Los reportes nuevos se enviarán al reconectarse.
@@ -253,8 +225,7 @@ function Home({ scope = 'nacional' }) {
       )}
 
       <div className="home-container">
-
-        {/* Mapa — Nacional usa Leaflet/OSM, INSA usa CRS.Simple + plano */}
+        {/* Mapa — mitad superior en móvil, columna izquierda en desktop */}
         <div className="map-section" ref={mapSectionRef}>
           {scope === 'insa' ? (
             <INSAMapView {...mapProps} />
@@ -263,7 +234,7 @@ function Home({ scope = 'nacional' }) {
           )}
         </div>
 
-        {/* Sidebar — idéntico para ambos scopes */}
+        {/* Sidebar — mitad inferior scrolleable en móvil, columna derecha en desktop */}
         <div className="sidebar">
           {showReportForm && user ? (
             <ReportForm
@@ -281,60 +252,15 @@ function Home({ scope = 'nacional' }) {
               }}
             />
           ) : (
-            <>
-              <div className="welcome-section">
-                {user ? (
-                  <>
-                    <h2>¡Hola, {displayName}!</h2>
-                    <p>
-                      {scope === 'insa'
-                        ? 'Haz clic en el plano para reportar una situación ambiental dentro del INSA.'
-                        : 'Haz clic en el mapa o usa el GPS del formulario para reportar un punto ambiental.'
-                      }
-                    </p>
-                    {myReportCount > 0 && (
-                      <p className="welcome-stats">
-                        Tienes <strong>{myReportCount}</strong> {myReportCount === 1 ? 'reporte enviado' : 'reportes enviados'}.
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <h2>
-                      {scope === 'insa'
-                        ? 'EcoMap — Instituto Nacional de Santa Ana'
-                        : 'Bienvenido a EcoMap'
-                      }
-                    </h2>
-                    <p>
-                      {scope === 'insa'
-                        ? 'Haz clic en el plano del Instituto Nacional de Santa Ana para reportar un punto ambiental.'
-                        : 'Haz clic en el mapa para reportar un punto ambiental en El Salvador.'
-                      }
-                    </p>
-                    <p className="login-prompt">
-                      <a href="/login">Inicia sesión</a> para hacer reportes
-                    </p>
-                  </>
-                )}
-              </div>
-
-              {confirmError && (
-                <div className="warning-message">{confirmError}</div>
-              )}
-
-              <MarkerList markers={markers} onMarkerSelect={handleMarkerSelect} />
-            </>
+            sidebarContent
           )}
         </div>
       </div>
 
-      {/* Backdrop cuando formulario está abierto */}
       {showReportForm && (
         <div className="report-form-backdrop" onClick={handleCancelForm} />
       )}
 
-      {/* Modal de detalles */}
       {openReport && (
         <ReportPopup
           report={openReport}

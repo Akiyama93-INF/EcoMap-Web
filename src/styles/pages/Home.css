@@ -1,24 +1,31 @@
+/* Home — v3.4.3
+   Layout split-screen: mapa arriba, lista abajo, ambos siempre visibles en móvil.
+   Desktop mantiene el grid de dos columnas original. */
+
 .home {
-  flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
   background-color: var(--bg-color);
+  /* En móvil la altura total la impone el viewport menos navbar y bottom-nav */
+  height: calc(100dvh - 64px - 60px);
+  overflow: hidden; /* sin scroll de página — cada panel tiene el suyo */
 }
 
+/* ── Desktop: grid dos columnas ─────────────────────────────────────────── */
 .home-container {
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 1.5rem;
-  /* Altura fija = ventana menos navbar (64px) menos padding del container (3rem = 48px) */
-  height: calc(100vh - 64px - 3rem);
+  flex: 1;
+  height: 100%;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   padding: 1.5rem;
+  overflow: hidden;
 }
 
-/* El mapa ocupa toda la altura de la celda del grid */
 .map-section {
   background-color: var(--white);
   border-radius: var(--border-radius);
@@ -27,7 +34,6 @@
   height: 100%;
 }
 
-/* El sidebar ocupa la misma altura y hace scroll internamente */
 .sidebar {
   height: 100%;
   display: flex;
@@ -46,30 +52,110 @@
   border-radius: 4px;
 }
 
+/* ── Tablet ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .home-container {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 1rem;
+    height: 100%;
+  }
+
+  /* En tablet usamos el mismo split-screen vertical que en móvil */
+  .home {
+    height: calc(100dvh - 64px - 60px);
+    overflow: hidden;
+  }
+
+  .map-section {
+    height: 45%;
+    min-height: 240px;
+    flex-shrink: 0;
+  }
+
+  .sidebar {
+    flex: 1;
+    height: 0; /* flex-child necesita height: 0 para que overflow-y funcione */
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Convertir el grid en flex columna para que los % funcionen */
+  .home-container {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* ── Móvil ──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .home {
+    /* 64px navbar superior + 60px bottom-nav fijo */
+    height: calc(100dvh - 64px - 60px);
+    overflow: hidden;
+  }
+
+  .home-container {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Mapa: ocupa 50% de la altura disponible, fijo */
+  .map-section {
+    height: 60%;
+    min-height: 200px;
+    flex-shrink: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 2px solid var(--border-color);
+  }
+
+  /* Lista: ocupa el 55% restante con scroll propio */
+  .sidebar {
+    flex: 1;
+    height: 0; /* necesario para que overflow-y scroll funcione en flex-child */
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem;
+    gap: 0.75rem;
+    border-radius: 0;
+  }
+}
+
+/* ── Secciones del sidebar ──────────────────────────────────────────────── */
 .welcome-section {
   background-color: var(--white);
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
+  flex-shrink: 0;
 }
 
 .welcome-section h2 {
   color: var(--primary-color);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }
 
 .welcome-section p {
   color: var(--text-color);
-  line-height: 1.8;
-  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
 }
 
 .login-prompt {
   background-color: var(--success-bg);
-  padding: 0.75rem;
+  padding: 0.6rem 0.75rem;
   border-radius: var(--border-radius);
   border-left: 4px solid var(--primary-color);
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .login-prompt a {
@@ -79,69 +165,22 @@
 
 .offline-banner {
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   background-color: var(--warning-color);
   color: white;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   text-align: center;
-  z-index: 1000;
-}
-
-/* ── Tablet: columna única, scroll de página normal ──────────────────────── */
-@media (max-width: 1024px) {
-  .home-container {
-    grid-template-columns: 1fr;
-    height: auto;          /* sin altura fija — scroll de página */
-    padding-bottom: 2rem;
-  }
-
-  .map-section {
-    height: 55vh;
-    min-height: 320px;
-  }
-
-  .sidebar {
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-  }
-}
-
-/* ── Móvil ───────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .home-container {
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
-
-  .map-section {
-    height: 50vh;
-    min-height: 260px;
-  }
-}
-/* ── Fix desborde horizontal en móvil/APK ───────────────────── */
-.home,
-.home-container,
-.map-section,
-.sidebar,
-.welcome-section {
-  max-width: 100%;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
- 
-.welcome-section p {
-  overflow-wrap: break-word;
-  word-break: break-word;
+  flex-shrink: 0;
+  z-index: 100;
 }
 
 .welcome-stats {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
   color: var(--text-light);
   background-color: var(--success-bg);
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.7rem;
   border-radius: var(--border-radius);
   border-left: 3px solid var(--primary-color);
 }
@@ -149,4 +188,19 @@
 .welcome-stats strong {
   color: var(--primary-color);
   font-weight: 700;
+}
+
+/* ── Fix desborde horizontal en móvil/APK ───────────────────────────────── */
+.home,
+.home-container,
+.map-section,
+.sidebar,
+.welcome-section {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.welcome-section p {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }

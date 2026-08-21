@@ -1,13 +1,8 @@
-// MarkerList — Fase 4 + mejoras v3
+// MarkerList — v3.4.1
 // Añadido:
-//   - Contador de reportes por categoría en filtros
-//   - Ordenar lista por fecha o confirmaciones
-//   - Compartir reporte por WhatsApp con link directo
-// v3.2.6:
-//   - buildWhatsAppLink: deep link por reportId, mensaje enriquecido
-//   - Búsqueda por texto en tiempo real con resaltado de coincidencias
-//     Busca en: descripción, categoría, nombre de usuario, departamento
-//   - Contador dinámico muestra resultados de búsqueda vs total
+//   - Estado selectedId: al presionar un item, se aplica la clase
+//     marker-item--selected durante 1.5 s para feedback visual (glow verde).
+//   - onMarkerSelect se llama igual que antes — sin cambios en la API.
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { getCategoryByName, CATEGORIES_ARRAY } from '../utils/categories'
@@ -43,7 +38,6 @@ function buildWhatsAppLink(marker) {
   return `https://wa.me/?text=${encodeURIComponent(lines)}`
 }
 
-// Resalta las partes del texto que coinciden con la búsqueda
 function Highlight({ text, query }) {
   if (!query || !text) return <>{text}</>
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
@@ -60,16 +54,21 @@ function Highlight({ text, query }) {
 }
 
 function MarkerList({ markers = [], onMarkerSelect }) {
-  const [activeFilter, setActiveFilter] = useState('all')
-  const [sortBy,       setSortBy]       = useState('fecha')
-  const [searchQuery,  setSearchQuery]  = useState('')
+  const [activeFilter,  setActiveFilter]  = useState('all')
+  const [sortBy,        setSortBy]        = useState('fecha')
+  const [searchQuery,   setSearchQuery]   = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  // ID del item que acaba de ser seleccionado (para el glow temporal)
+  const [selectedId,    setSelectedId]    = useState(null)
   const inputRef = useRef(null)
 
-  // Atajo de teclado: / enfoca la búsqueda
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      if (
+        e.key === '/' &&
+        document.activeElement.tagName !== 'INPUT' &&
+        document.activeElement.tagName !== 'TEXTAREA'
+      ) {
         e.preventDefault()
         inputRef.current?.focus()
       }
@@ -87,7 +86,6 @@ function MarkerList({ markers = [], onMarkerSelect }) {
     inputRef.current?.focus()
   }, [])
 
-  // Conteo por categoría individual para los filtros
   const countById = useMemo(() => {
     const counts = {}
     markers.forEach((m) => {
@@ -97,9 +95,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
     return counts
   }, [markers])
 
-  // Pipeline: filtro por categoría → búsqueda por texto → ordenamiento
   const filtered = useMemo(() => {
-    // 1. Filtro por categoría
     let base = activeFilter === 'all'
       ? markers
       : markers.filter((m) => {
@@ -107,21 +103,19 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           return cat?.id === activeFilter
         })
 
-    // 2. Búsqueda por texto — busca en descripción, categoría, usuario y departamento
     const q = searchQuery.trim().toLowerCase()
     if (q) {
       base = base.filter((m) => {
         const haystack = [
-          m.description   ?? '',
-          m.category      ?? '',
-          m.userName      ?? '',
-          m.department    ?? '',
+          m.description ?? '',
+          m.category    ?? '',
+          m.userName    ?? '',
+          m.department  ?? '',
         ].join(' ').toLowerCase()
         return haystack.includes(q)
       })
     }
 
-    // 3. Ordenamiento
     return [...base].sort((a, b) => {
       if (sortBy === 'confirmaciones') {
         const ca = a.confirmationCount ?? a.confirmations?.length ?? 0
@@ -136,11 +130,17 @@ function MarkerList({ markers = [], onMarkerSelect }) {
 
   const isSearching = searchQuery.trim().length > 0
 
+  // Al presionar un item: aplica glow temporal + llama al handler del padre
+  const handleItemClick = useCallback((marker) => {
+    setSelectedId(marker.id)
+    onMarkerSelect?.(marker)
+    setTimeout(() => setSelectedId(null), 1500)
+  }, [onMarkerSelect])
+
   return (
     <div className="marker-list">
       <div className="marker-list-header">
 
-        {/* Título + contador */}
         <h3 className="marker-list-title">
           Reportes
           <span className="marker-list-count">
@@ -151,7 +151,6 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           </span>
         </h3>
 
-        {/* Barra de búsqueda */}
         <div className={`ml-search-wrapper${searchFocused ? ' ml-search-wrapper--focused' : ''}`}>
           <svg className="ml-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -181,7 +180,6 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           )}
         </div>
 
-        {/* Filtros por categoría */}
         <div className="marker-filter">
           <button
             className={`filter-btn${activeFilter === 'all' ? ' active' : ''}`}
@@ -206,7 +204,6 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           ))}
         </div>
 
-        {/* Ordenamiento */}
         <div className="marker-sort">
           <span className="marker-sort-label">Ordenar:</span>
           <button
@@ -224,7 +221,6 @@ function MarkerList({ markers = [], onMarkerSelect }) {
         </div>
       </div>
 
-      {/* Lista o estados vacíos */}
       {filtered.length === 0 ? (
         <div className="ml-empty">
           {isSearching ? (
@@ -250,6 +246,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
             const icon  = cat?.icon  ?? '📍'
             const confirmCount = marker.confirmationCount ?? marker.confirmations?.length ?? 0
             const q = searchQuery.trim()
+            const isSelected = selectedId === marker.id
 
             const fecha = marker.createdAt?.toDate
               ? marker.createdAt.toDate().toLocaleDateString('es-SV', {
@@ -268,16 +265,16 @@ function MarkerList({ markers = [], onMarkerSelect }) {
             return (
               <li
                 key={marker.id}
-                className="marker-item"
+                className={`marker-item${isSelected ? ' marker-item--selected' : ''}`}
                 title="Haz clic para ver en el mapa"
               >
                 <div
                   className="marker-item-stripe"
                   style={{ backgroundColor: color }}
-                  onClick={() => onMarkerSelect?.(marker)}
+                  onClick={() => handleItemClick(marker)}
                 />
 
-                <div className="marker-item-body" onClick={() => onMarkerSelect?.(marker)}>
+                <div className="marker-item-body" onClick={() => handleItemClick(marker)}>
                   <div className="marker-item-header">
                     <span className="marker-item-badge" style={{ backgroundColor: color + '22', color }}>
                       {icon} <Highlight text={marker.category} query={q} />
@@ -332,7 +329,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                     </svg>
                   </a>
-                  <div className="marker-item-arrow" onClick={() => onMarkerSelect?.(marker)}>›</div>
+                  <div className="marker-item-arrow" onClick={() => handleItemClick(marker)}>›</div>
                 </div>
               </li>
             )

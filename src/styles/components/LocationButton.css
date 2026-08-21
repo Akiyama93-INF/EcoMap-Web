@@ -61,3 +61,12 @@
   max-width: 260px;
   line-height: 1.4;
 }
+
+@media (max-width: 600px) {
+  .location-btn-wrapper {
+    align-self: flex-start;
+  }
+  .location-btn {
+    width: auto;
+  }
+}
