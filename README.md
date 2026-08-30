@@ -17,12 +17,21 @@ El proyecto combina un mapa nacional con un mapa institucional del **Instituto N
 - Modo oscuro con tiles **CartoDB Dark Matter**
 - Restricción geográfica de las búsquedas y reportes al territorio de El Salvador
 - Geolocalización del usuario mediante GPS
-- Botón **Usar mi ubicación**
+- Botón **Mi ubicación** compacto integrado al mapa
 - Buscador de lugares mediante **Nominatim**
 - Búsqueda con debounce, estados de carga, errores, resultados vacíos y cierre del listado
 - Selección de una ubicación directamente desde los resultados del buscador
 - Marcadores interactivos con información detallada de cada reporte
 - Navegación mediante las rutas `/nacional` y `/insa`
+
+### 📱 Experiencia móvil
+
+- Layout **split-screen** en móvil: mapa en la mitad superior, lista de reportes en la inferior, ambos visibles simultáneamente
+- Seleccionar un reporte de la lista hace **flyTo** en el mapa en tiempo real
+- Feedback visual al seleccionar un reporte — glow verde animado en el ítem
+- Botón flotante para volver al inicio de la pantalla
+- Saludo personalizado en la barra de navegación cuando hay sesión activa
+- Barra de navegación inferior fija para acceso rápido a las secciones principales
 
 ### 🏫 Mapa institucional del INSA
 
@@ -159,7 +168,9 @@ La bienvenida se muestra una sola vez por navegador utilizando `localStorage`.
 Se admiten dos métodos:
 
 - Correo electrónico y contraseña
-- Google OAuth
+- Google — selector nativo en Android, popup en web
+
+El inicio de sesión con Google en Android utiliza `@codetrix-studio/capacitor-google-auth`, que abre el selector de cuentas directamente dentro de la app sin redirigir al navegador externo.
 
 El registro mediante correo incluye:
 
@@ -205,16 +216,9 @@ En Android se utiliza **Firebase Cloud Messaging** mediante Capacitor para:
 
 ### ⚡ Rendimiento
 
-A partir de v3.2.6, las páginas principales se cargan mediante **lazy loading**:
+Las páginas principales se cargan mediante **lazy loading**:
 
-- `Home`
-- `Nacional`
-- `INSA`
-- `Login`
-- `Register`
-- `Profile`
-- `Estadisticas`
-- `NotFound`
+- `Home`, `Nacional`, `INSA`, `Login`, `Register`, `Profile`, `Estadisticas`, `NotFound`
 
 Esto reduce el contenido que debe cargarse inicialmente y permite descargar cada página cuando realmente se necesita.
 
@@ -245,6 +249,7 @@ Esto reduce el contenido que debe cargarse inicialmente y permite descargar cada
 | Imágenes | Cloudinary |
 | Geolocalización / búsqueda | Nominatim API |
 | Aplicación móvil | Capacitor 8 + Android |
+| Google Auth nativo | `@codetrix-studio/capacitor-google-auth` |
 | Cámara | `@capacitor/camera` |
 | Notificaciones | `@capacitor/push-notifications` |
 | Build | Vite |
@@ -263,8 +268,10 @@ EcoMap-Web/
 │   │   ├── map/              # Controles y funciones del mapa nacional
 │   │   ├── INSAMapView.jsx   # Mapa institucional INSA
 │   │   ├── MapView.jsx       # Mapa nacional
+│   │   ├── MarkerList.jsx    # Lista de reportes con búsqueda y filtros
 │   │   ├── ReportForm.jsx    # Formulario de reportes
 │   │   ├── ReportPopup.jsx   # Detalle y seguimiento del reporte
+│   │   ├── ScrollToTopButton.jsx
 │   │   ├── WelcomeModal.jsx  # Bienvenida inicial
 │   │   └── ...
 │   ├── context/
@@ -303,9 +310,8 @@ EcoMap-Web/
 │   │   └── privacy.js
 │   ├── App.jsx
 │   └── main.jsx
-├── capacitor.config.ts
+├── capacitor.config.json
 ├── package.json
-├── package-lock.json
 └── README.md
 ```
 
@@ -348,7 +354,7 @@ VITE_CLOUDINARY_CLOUD_NAME=
 VITE_CLOUDINARY_UPLOAD_PRESET=
 ```
 
-> `VITE_FIREBASE_STORAGE_BUCKET` forma parte de la configuración del proyecto Firebase, pero las imágenes de EcoMap se almacenan actualmente en **Cloudinary**, no mediante Firebase Storage.
+> `VITE_FIREBASE_STORAGE_BUCKET` forma parte de la configuración del proyecto Firebase, pero las imágenes de EcoMap se almacenan en **Cloudinary**, no mediante Firebase Storage.
 
 ### Ejecutar en desarrollo
 
@@ -386,13 +392,13 @@ npm run preview
 
 ## 🔥 Configuración Firebase
 
-EcoMap utiliza Firebase para autenticación, base de datos en tiempo real y funciones relacionadas con usuarios.
+EcoMap utiliza Firebase para autenticación, base de datos en tiempo real y notificaciones.
 
 ### Authentication
 
 Métodos utilizados:
 
-- Google OAuth
+- Google — nativo en Android, popup en web
 - Correo electrónico y contraseña
 
 ### Firestore — `reports`
@@ -514,7 +520,7 @@ npm run build
 npx cap sync android
 ```
 
-Abrir el proyecto:
+Abrir el proyecto en Android Studio:
 
 ```bash
 npx cap open android
@@ -526,7 +532,7 @@ Desde Android Studio:
 Build → Generate Signed Bundle / APK → APK
 ```
 
-El APK de release se genera normalmente en:
+El APK de release se genera en:
 
 ```text
 android/app/build/outputs/apk/release/app-release.apk
@@ -596,11 +602,24 @@ Este proyecto está bajo la licencia MIT.
 
 **Equipo EcoMap** — Instituto Nacional de Santa Ana (INSA), Especialidad ITSI 2° "H"
 
-Correo: ecomap.proyecto@gmail.com
-
 ---
 
 ## 📋 Historial de versiones
+
+### 🌎 EcoMap v3.5.5 — Agosto de 2026
+
+Mejoras de experiencia móvil, correcciones críticas de autenticación y rediseño de la interfaz principal.
+
+- Login con Google **nativo en Android** mediante `@codetrix-studio/capacitor-google-auth` — el selector de cuentas abre dentro de la app sin salir a Chrome
+- Fix botón "Iniciando sesión" quedaba bloqueado en móvil al usar Google
+- Layout **split-screen** en móvil: mapa arriba, lista abajo, ambos visibles al mismo tiempo
+- Seleccionar un reporte de la lista hace **flyTo** en el mapa en tiempo real
+- Feedback visual al seleccionar reporte — glow verde animado
+- Saludo personalizado en la navbar móvil cuando hay sesión activa
+- Botón flotante para volver al inicio de la pantalla
+- Botón **Mi ubicación** compacto en móvil — ya no ocupa todo el ancho
+- Eliminado el footer descriptivo innecesario
+- Eliminado el cuadro de bienvenida del sidebar — la lista ocupa ese espacio directamente
 
 ### 🌎 EcoMap v3.2.6 — Agosto de 2026
 
@@ -608,25 +627,16 @@ Actualización centrada en experiencia de usuario, perfiles, seguimiento de repo
 
 - Nuevo **modal de bienvenida** para visitantes nuevos
 - Opción para crear una cuenta o continuar explorando sin registrarse
-- Bienvenida personalizada en la página principal para usuarios autenticados
-- Conteo de reportes propios visible desde la página principal
 - Perfil de usuario ampliado con sección **Tu contribución**
 - Estadísticas personales de reportes pendientes, confirmados y resueltos
 - Conteo de confirmaciones recibidas por los reportes del usuario
 - Cambio y subida de fotografías de perfil mediante Cloudinary
 - Popup de reportes rediseñado con información de estado y contexto temporal
-- Barra visual de respaldo con fotografía, ubicación y confirmaciones
 - Sistema de comentarios en tiempo real dentro de los reportes
-- Visualización del autor y avatar en comentarios
 - Eliminación de comentarios restringida al autor
-- Confirmación explícita antes de marcar un reporte como resuelto
-- Buscador de lugares con estados de carga, error, resultados vacíos y selección mejorada
-- Inicio de sesión y registro con correo electrónico y Google
-- Validaciones adicionales en el formulario de registro
+- Buscador de lugares con estados de carga, error y resultados vacíos mejorados
 - Estadísticas separadas para los ámbitos Nacional, INSA y Todos
-- Lazy loading de las páginas principales para reducir la carga inicial
-- Mantenimiento de Cloudinary como almacenamiento de imágenes
-- Actualización general de la estructura y documentación del proyecto
+- Lazy loading de las páginas principales
 
 ### 🌎 EcoMap v3.2.0 — 10 de agosto de 2026
 
@@ -635,11 +645,8 @@ Correcciones de precisión, rendimiento y seguridad.
 - Pin de ubicación sincronizado con las coordenadas exactas del reporte
 - Eliminado el desplazamiento de privacidad en marcadores de sitios públicos
 - Consulta de reportes filtrada por `scope`
-- Buscador de lugares mejorado con deduplicación y filtrado por tipo de entidad
 - Validación de ownership antes de cambiar el estado de un reporte
 - Corregida la doble escritura de `createdAt` en login con Google
-- Confirmación explícita antes de marcar un reporte como resuelto
-- Validación mínima y contador de caracteres en comentarios
 - Radio de detección de duplicados ajustado de 50 m a 30 m
 
 ### 🌎 EcoMap v3.1.0
