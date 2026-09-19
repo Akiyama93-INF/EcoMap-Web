@@ -330,6 +330,31 @@
   white-space: nowrap;
   animation: fadeIn 0.2s ease-in-out;
 }
+/* ── Modo oscuro del mapa (OSM + filtro CSS) ─────────────────────────────
+   Se aplica solo a las imágenes de tiles para no afectar marcadores ni
+   popups. El selector apunta al contenedor interno que Leaflet genera
+   para el TileLayer cuando recibe className="tiles-dark".
+
+   Filtro: invert invierte colores (fondo claro → oscuro), hue-rotate
+   corrige el tono para que verde/azul queden naturales, brightness baja
+   la luminosidad total, saturate reduce el color para que no quede
+   demasiado vibrante. Resultado: mapa oscuro estilo "dark slate".
+   ──────────────────────────────────────────────────────────────────── */
 .tiles-dark {
-  filter: invert(100%) hue-rotate(180deg) brightness(0.85) saturate(0.8);
+  filter: invert(100%) hue-rotate(180deg) brightness(0.9) saturate(0.75) contrast(0.9);
+}
+
+/* Asegurar que el filtro solo toque las imágenes de tiles,
+   no los marcadores SVG ni los popups que están en panes superiores */
+.leaflet-tile-pane .tiles-dark img,
+.tiles-dark img.leaflet-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(0.9) saturate(0.75) contrast(0.9);
+}
+
+/* Re-invertir los marcadores para que mantengan sus colores originales
+   cuando el modo oscuro está activo — aplica a todos los iconos div */
+[data-theme="dark"] .leaflet-marker-pane .cat-marker,
+[data-theme="dark"] .leaflet-marker-pane .user-location-icon,
+[data-theme="dark"] .leaflet-shadow-pane img {
+  filter: none;
 }

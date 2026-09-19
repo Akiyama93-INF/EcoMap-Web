@@ -32,14 +32,13 @@ const EL_SALVADOR_BOUNDS = [[12.8, -90.1], [14.8, -87.6]]
 
 const INSA_CENTER = [13.9942, -89.5598]
 
-const TILE_LIGHT = {
-  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-}
-const TILE_DARK = {
-  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-}
+// OSM sin API key — funciona en web y en APK (sin restricción de referer)
+// Modo oscuro: misma URL + filtro CSS en .tiles-dark (ver MapView.css)
+const OSM_URL         = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
+const TILE_LIGHT = { url: OSM_URL, attribution: OSM_ATTRIBUTION }
+const TILE_DARK  = { url: OSM_URL, attribution: OSM_ATTRIBUTION }
 
 function createCategoryIcon(color, symbol) {
   return L.divIcon({
@@ -209,12 +208,19 @@ function MapView({
         zoomControl={false}
         ref={mapRef}
       >
-        {/* key fuerza remount del TileLayer al cambiar tema */}
+        {/* key fuerza remount del TileLayer al cambiar tema.
+            crossOrigin="anonymous" es necesario en WebView de Android
+            para que las imágenes de OSM carguen sin bloqueo CORS. */}
         <TileLayer
           key={isDarkActive ? 'dark' : 'light'}
           url={tiles.url}
           attribution={tiles.attribution}
           className={isDarkActive ? 'tiles-dark' : ''}
+          crossOrigin="anonymous"
+          maxZoom={18}
+          minZoom={8}
+          tileSize={256}
+          keepBuffer={2}
         />
 
         <MapBounds onOutOfBounds={handleOutOfBounds} />
