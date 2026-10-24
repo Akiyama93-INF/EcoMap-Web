@@ -144,6 +144,8 @@ El perfil incluye estadísticas personales:
 
 ### 📈 Estadísticas
 
+La interfaz incluye filtros de periodo, evolución temporal, seguimiento y exportación CSV. El perfil separa actividad y ajustes, con filtros para el historial personal. Consulta [los cambios y criterios de cálculo](docs/analytics-profile-update.md).
+
 La sección `/estadisticas` permite analizar los reportes por ámbito:
 
 - **Nacional**

@@ -14,7 +14,12 @@ function Navbar() {
       setUser(currentUser)
       setLoading(false)
     })
-    return unsubscribe
+    const refreshProfile = () => {
+      const currentUser = authService.getCurrentUser()
+      setUser(currentUser ? { ...currentUser } : null)
+    }
+    window.addEventListener('ecomap:profileUpdated', refreshProfile)
+    return () => { unsubscribe(); window.removeEventListener('ecomap:profileUpdated', refreshProfile) }
   }, [])
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || ''
