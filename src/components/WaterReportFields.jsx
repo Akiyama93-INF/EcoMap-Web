@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // components/WaterReportFields.jsx — nuevo en Fase 4 (Chorro público dañado)
 // Campos extra opcionales para la categoría chorro_publico.
 // Props:
@@ -102,3 +103,8 @@ function WaterReportFields({ values = {}, onChange }) {
 }
 
 export default WaterReportFields
+
+WaterReportFields.propTypes = {
+  values: PropTypes.object,
+  onChange: PropTypes.func,
+}

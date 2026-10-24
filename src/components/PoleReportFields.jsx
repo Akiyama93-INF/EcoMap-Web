@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // components/PoleReportFields.jsx — nuevo en Fase 4 (Poste de luz)
 // Sección condicional de campos opcionales para la categoría poste_luz.
 // Se monta dentro de ReportForm cuando selectedCat.id === 'poste_luz'.
@@ -152,3 +153,8 @@ function PoleReportFields({ values = {}, onChange }) {
 }
 
 export default PoleReportFields
+
+PoleReportFields.propTypes = {
+  values: PropTypes.object,
+  onChange: PropTypes.func,
+}

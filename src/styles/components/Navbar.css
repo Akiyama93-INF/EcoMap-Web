@@ -216,3 +216,12 @@
   .bottom-nav-icon  { font-size: 1.2rem; }
   .navbar-greeting  { font-size: 0.65rem; }
 }
+
+.navbar { box-shadow: none; border-bottom: 1px solid var(--border-subtle); }
+.navbar-container { max-width: 1600px; }
+.navbar-menu { gap: 1.25rem; font-size: .875rem; }
+@media (max-width: 768px) {
+  .bottom-nav { height: calc(60px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: none; }
+}
+
+.bottom-nav-icon svg { width: 23px; height: 23px; }

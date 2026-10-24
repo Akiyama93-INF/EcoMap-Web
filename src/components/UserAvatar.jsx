@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import '../styles/components/UserAvatar.css'
 
@@ -26,3 +27,8 @@ function UserAvatar({ name = '', size = 32, photoURL = null }) {
 }
 
 export default UserAvatar
+UserAvatar.propTypes = {
+  name: PropTypes.string,
+  size: PropTypes.number,
+  photoURL: PropTypes.string,
+}

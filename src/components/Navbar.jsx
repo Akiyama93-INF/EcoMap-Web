@@ -33,7 +33,7 @@ function Navbar() {
           <Link to="/" className="navbar-logo">
             <img src="/logo.jpg" alt="EcoMap" className="navbar-logo-img" />
             <span className="navbar-logo-text">
-              <span className="navbar-logo-full">EcoMap - Juntos por un El Salvador más limpio</span>
+              <span className="navbar-logo-full">EcoMap</span>
               <span className="navbar-logo-short">EcoMap</span>
             </span>
           </Link>
@@ -41,7 +41,7 @@ function Navbar() {
           {/* Saludo — solo visible en móvil cuando hay sesión y se está en el mapa */}
           {!loading && user && isMapPage && (
             <span className="navbar-greeting">
-              Hola, {displayName} ¡siempre eres bienvenido! 🌱
+              Hola, {displayName}
             </span>
           )}
 
@@ -80,17 +80,17 @@ function Navbar() {
       {/* Barra de navegación inferior — solo visible en móvil */}
       <nav className="bottom-nav">
         <NavLink to="/nacional" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
-          <span className="bottom-nav-icon">🗺️</span>
+          <span className="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Z"/><path d="M9 3v16M15 5v16"/></svg></span>
           <span className="bottom-nav-label">Nacional</span>
         </NavLink>
 
         <NavLink to="/insa" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
-          <span className="bottom-nav-icon">🏫</span>
+          <span className="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 21h18M5 21V9l7-6 7 6v12M9 21v-6h6v6M9 10h6"/></svg></span>
           <span className="bottom-nav-label">INSA</span>
         </NavLink>
 
         <NavLink to="/estadisticas" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
-          <span className="bottom-nav-icon">📊</span>
+          <span className="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M4 3v18h17M8 17v-5M13 17V7M18 17V4"/></svg></span>
           <span className="bottom-nav-label">Estadísticas</span>
         </NavLink>
 
@@ -104,7 +104,7 @@ function Navbar() {
             </NavLink>
           ) : (
             <NavLink to="/login" className={({ isActive }) => isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}>
-              <span className="bottom-nav-icon">👤</span>
+              <span className="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span>
               <span className="bottom-nav-label">Iniciar sesión</span>
             </NavLink>
           )

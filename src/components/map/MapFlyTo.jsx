@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Componente interno que controla la navegación programática del mapa
 // Recibe una posición y hace flyTo. No renderiza nada visible.
 
@@ -27,3 +28,8 @@ function MapFlyTo({ position, zoom = 15 }) {
 }
 
 export default MapFlyTo
+
+MapFlyTo.propTypes = {
+  position: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number, accuracy: PropTypes.number }),
+  zoom: PropTypes.number,
+}

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
 // Cámara: en APK usa @capacitor/camera (nativo), en browser usa input file estándar
 // Actualizado: botón "Usar mi ubicación" con GPS de alta precisión (solo en scope nacional)
@@ -432,7 +433,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
           {!location && !gpsLoading && (
             <p className="location-hint">
-              Toca "Usar mi ubicación" o haz clic directamente en el mapa.
+              Toca “Usar mi ubicación” o haz clic directamente en el mapa.
             </p>
           )}
         </div>
@@ -465,3 +466,12 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 }
 
 export default ReportForm
+ReportForm.propTypes = {
+  location: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number }),
+  onSubmit: PropTypes.func,
+  onCancel: PropTypes.func,
+  markers: PropTypes.arrayOf(PropTypes.object),
+  onConfirmExisting: PropTypes.func,
+  scope: PropTypes.oneOf(['nacional', 'insa']),
+  onLocationChange: PropTypes.func,
+}

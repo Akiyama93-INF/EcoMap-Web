@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types'
+import { getReportStatus } from '../utils/reportFilters'
 // Estadisticas.jsx — v4
 // Añadido:
 //   - Selector de scope: Nacional / INSA / Todos
@@ -7,7 +9,7 @@
 
 import React, { useState, useMemo } from 'react'
 import useReports from '../hooks/useReports'
-import { CATEGORIES_ARRAY, getCategoryByName } from '../utils/categories'
+import { CATEGORIES, getCategoryByName } from '../utils/categories'
 import Loading from '../components/Loading'
 import '../styles/pages/Estadisticas.css'
 
@@ -109,12 +111,12 @@ function Estadisticas() {
 
   const stats = useMemo(() => {
     const total      = reports.length
-    const pendiente  = reports.filter((r) => !r.status || r.status === 'pending').length
-    const confirmado = reports.filter((r) => r.status === 'confirmed').length
-    const resuelto   = reports.filter((r) => r.status === 'resolved').length
+    const pendiente  = reports.filter((r) => getReportStatus(r) === 'pending').length
+    const confirmado = reports.filter((r) => getReportStatus(r) === 'confirmed').length
+    const resuelto   = reports.filter((r) => getReportStatus(r) === 'resolved').length
 
     // Por categoría
-    const porCategoria = CATEGORIES_ARRAY.map((cat) => {
+    const porCategoria = Object.values(CATEGORIES).map((cat) => {
       const count = reports.filter((r) => r.category === cat.name).length
       return { ...cat, count }
     }).filter((c) => c.count > 0).sort((a, b) => b.count - a.count)
@@ -353,3 +355,15 @@ function Estadisticas() {
 }
 
 export default Estadisticas
+BarraHorizontal.propTypes = {
+  valor: PropTypes.number,
+  maximo: PropTypes.number,
+  color: PropTypes.string,
+}
+
+TarjetaStat.propTypes = {
+  label: PropTypes.string,
+  valor: PropTypes.number,
+  sub: PropTypes.string,
+  color: PropTypes.string,
+}

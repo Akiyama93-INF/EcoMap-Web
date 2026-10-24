@@ -1,3 +1,4 @@
+import { getReportStatus } from '../utils/reportFilters'
 // Página /perfil — v3.4.0
 // Cambios vs v3.3:
 //   - Sección de impacto personal: pendientes, confirmados, resueltos,
@@ -53,9 +54,9 @@ function Profile() {
 
   // ── Métricas de impacto ──────────────────────────────────────────────────
   const statsImpacto = React.useMemo(() => {
-    const pendientes  = myReports.filter((r) => (r.status ?? 'pending') === 'pending').length
-    const confirmados = myReports.filter((r) => r.status === 'confirmed').length
-    const resueltos   = myReports.filter((r) => r.status === 'resolved').length
+    const pendientes  = myReports.filter((r) => getReportStatus(r) === 'pending').length
+    const confirmados = myReports.filter((r) => getReportStatus(r) === 'confirmed').length
+    const resueltos   = myReports.filter((r) => getReportStatus(r) === 'resolved').length
     // Total de confirmaciones que el usuario recibió en sus reportes
     const confirmacionesRecibidas = myReports.reduce((acc, r) => {
       return acc + (r.confirmationCount ?? r.confirmations?.length ?? 0)
@@ -285,13 +286,13 @@ function Profile() {
                   pending:   'Pendiente',
                   confirmed: 'Confirmado',
                   resolved:  'Resuelto',
-                }[r.status ?? 'pending'] ?? 'Pendiente'
+                }[getReportStatus(r)] ?? 'Pendiente'
 
                 const statusColor = {
                   pending:   '#f39c12',
                   confirmed: '#27ae60',
                   resolved:  '#2980b9',
-                }[r.status ?? 'pending'] ?? '#f39c12'
+                }[getReportStatus(r)] ?? '#f39c12'
 
                 return (
                   <li key={r.id} className="profile-history-item">

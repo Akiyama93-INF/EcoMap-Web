@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Buscador de lugares en El Salvador mediante Nominatim
 // Muestra sugerencias y emite la ubicación seleccionada al componente padre
 
@@ -144,3 +145,7 @@ function SearchBar({ onLocationSelect }) {
 }
 
 export default SearchBar
+
+SearchBar.propTypes = {
+  onLocationSelect: PropTypes.func,
+}

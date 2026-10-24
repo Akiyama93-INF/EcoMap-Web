@@ -24,6 +24,16 @@ El proyecto combina un mapa nacional con un mapa institucional del **Instituto N
 - Marcadores interactivos con información detallada de cada reporte
 - Navegación mediante las rutas `/nacional` y `/insa`
 
+### 🖥️ Comodidad en escritorio
+
+- Detalle del reporte junto al mapa a partir de 1025 px
+- Panel lateral con ancho ajustable y opción para ampliar el mapa
+- Filtros de categoría, estado y búsqueda sincronizados entre mapa y lista
+- Estados consistentes entre lista, detalle, perfil y estadísticas
+- Detalle móvil independiente, con cierre por Escape y navegación por teclado
+
+Consulta [los cambios y la guía de verificación](docs/desktop-update.md).
+
 ### 📱 Experiencia móvil
 
 - Layout **split-screen** en móvil: mapa en la mitad superior, lista de reportes en la inferior, ambos visibles simultáneamente

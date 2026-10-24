@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Contenedor de controles del mapa: SearchBar y LocationButton
 // Se renderiza sobre el mapa como overlay
 
@@ -20,3 +21,10 @@ function MapControls({ onLocationSelect, onMyLocation, geoLoading, geoError }) {
 }
 
 export default MapControls
+
+MapControls.propTypes = {
+  onLocationSelect: PropTypes.func,
+  onMyLocation: PropTypes.func,
+  geoLoading: PropTypes.bool,
+  geoError: PropTypes.string,
+}

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // ReportPopup — v3.4.0
 // Cambios vs v3.3:
 //   - Barra de respaldo visual (foto / ubicación / confirmaciones)
@@ -6,6 +7,7 @@
 //   - Jerarquía visual mejorada en el cuerpo
 
 import React, { useState, useEffect, useRef } from 'react'
+import { getReportStatus } from '../utils/reportFilters'
 import { getCategoryByName } from '../utils/categories'
 import { firestoreService } from '../firebase/firestoreService'
 import '../styles/components/ReportPopup.css'
@@ -17,7 +19,7 @@ const STATUS_CONFIG = {
 }
 
 function getStatus(report) {
-  return STATUS_CONFIG[report.status] ?? STATUS_CONFIG.pending
+  return STATUS_CONFIG[getReportStatus(report)] ?? STATUS_CONFIG.pending
 }
 
 function tiempoRelativo(date) {
@@ -37,16 +39,22 @@ function tiempoRelativo(date) {
   return `hace ${years} ${years === 1 ? 'año' : 'años'}`
 }
 
-function useReverseGeocode(lat, lng) {
+function useReverseGeocode(lat, lng, scope) {
   const [direccion, setDireccion] = useState('Cargando dirección...')
 
   useEffect(() => {
-    if (!lat || !lng) {
+    if (scope === 'insa') {
+      setDireccion('Campus del Instituto Nacional de Santa Ana')
+      return
+    }
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       setDireccion(null)
       return
     }
 
+    setDireccion('Cargando dirección...')
     let cancelado = false
+    const controller = new AbortController()
 
     const fetchDireccion = async () => {
       try {
@@ -56,6 +64,7 @@ function useReverseGeocode(lat, lng) {
 
         const res = await fetch(url, {
           headers: { 'Accept-Language': 'es' },
+          signal: controller.signal,
         })
 
         if (!res.ok) throw new Error('Respuesta no válida')
@@ -81,8 +90,8 @@ function useReverseGeocode(lat, lng) {
 
     fetchDireccion()
 
-    return () => { cancelado = true }
-  }, [lat, lng])
+    return () => { cancelado = true; controller.abort() }
+  }, [lat, lng, scope])
 
   return direccion
 }
@@ -176,8 +185,7 @@ function RespaldoBar({ hasImage, confirmCount }) {
   )
 }
 
-function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStatus }) {
-  if (!report) return null
+function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStatus, embedded = false }) {
 
   const cat    = getCategoryByName(report.category)
   const color  = cat?.color ?? '#7f8c8d'
@@ -199,7 +207,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
     .filter((s) => (report.subtypes ?? []).includes(s.id))
     .map((s) => ({ ...s }))
 
-  const direccion = useReverseGeocode(report.lat, report.lng)
+  const direccion = useReverseGeocode(report.lat, report.lng, report.scope)
 
   // ── Comentarios ──────────────────────────────────────────────────────────
   const [confirmingResolve, setConfirmingResolve] = useState(false)
@@ -207,24 +215,54 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
   const [textoNuevo, setTextoNuevo]       = useState('')
   const [enviando, setEnviando]           = useState(false)
   const [errorEnvio, setErrorEnvio]       = useState(null)
-  const comentariosEndRef                 = useRef(null)
+  const cardRef = useRef(null)
+  const [resolving, setResolving] = useState(false)
+  const [resolveError, setResolveError] = useState(null)
+  const [commentsError, setCommentsError] = useState(null)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+
+  useEffect(() => {
+    const previousFocus = document.activeElement
+    const previousOverflow = document.body.style.overflow
+    const scroller = embedded ? cardRef.current?.closest('.sidebar-content') : null
+    const previousScroll = scroller?.scrollTop ?? 0
+    if (scroller) scroller.scrollTop = 0
+    if (!embedded) document.body.style.overflow = 'hidden'
+    cardRef.current?.focus({ preventScroll: true })
+    const handleKeys = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); closeRef.current() }
+      if (embedded || event.key !== 'Tab') return
+      const focusable = Array.from(cardRef.current?.querySelectorAll('button:not(:disabled), a[href], textarea:not(:disabled), input:not(:disabled), [tabindex="0"]') || []).filter((element) => element.getClientRects().length)
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!first) { event.preventDefault(); return }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === cardRef.current)) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === cardRef.current)) { event.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handleKeys)
+    return () => {
+      document.removeEventListener('keydown', handleKeys)
+      if (!embedded) document.body.style.overflow = previousOverflow
+      if (scroller) scroller.scrollTop = previousScroll
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true })
+    }
+  }, [embedded])
 
   useEffect(() => {
     const unsub = firestoreService.subscribeToComments(
       report.id,
       (data) => setComentarios(data),
-      (err)  => console.error('Comentarios error:', err)
+      () => setCommentsError('No se pudieron cargar los comentarios. Vuelve a abrir el reporte para reintentar.')
     )
     return () => unsub()
   }, [report.id])
 
-  useEffect(() => {
-    comentariosEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [comentarios])
+
 
   const handleEnviarComentario = async () => {
     const texto = textoNuevo.trim()
-    if (!texto || !currentUserId) return
+    if (texto.length < 3 || !currentUserId || enviando) return
     setEnviando(true)
     setErrorEnvio(null)
     try {
@@ -250,8 +288,9 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
   }
 
   return (
-    <div className="rp-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="rp-card" onClick={(e) => e.stopPropagation()}>
+    <div className={embedded ? 'rp-embedded' : 'rp-overlay'} onClick={embedded ? undefined : onClose} role={embedded ? 'region' : 'dialog'} aria-label="Detalle del reporte" aria-modal={embedded ? undefined : true}>
+      <div className="rp-card" ref={cardRef} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+        {embedded && <button className="rp-back" onClick={onClose}>← Volver a los reportes</button>}
 
         {/* Encabezado */}
         <div className="rp-header" style={{ backgroundColor: color }}>
@@ -288,21 +327,20 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                 className="rp-status-badge"
                 style={{ color: status.color, backgroundColor: status.bg, borderColor: status.border }}
               >
-                {report.status === 'pending'   && '🕐'}
-                {report.status === 'confirmed' && '✅'}
-                {report.status === 'resolved'  && '🔵'}
-                {!report.status                && '🕐'}
+                {getReportStatus(report) === 'pending'   && '🕐'}
+                {getReportStatus(report) === 'confirmed' && '✅'}
+                {getReportStatus(report) === 'resolved'  && '🔵'}
                 {' '}{status.label}
               </span>
               {/* Contexto del estado */}
               <span className="rp-status-context">
-                {report.status === 'confirmed' && confirmCount > 0 &&
+                {getReportStatus(report) === 'confirmed' && confirmCount > 0 &&
                   `Validado por ${confirmCount} ${confirmCount === 1 ? 'persona' : 'personas'}`
                 }
-                {report.status === 'pending' &&
+                {getReportStatus(report) === 'pending' &&
                   'Esperando validación comunitaria'
                 }
-                {report.status === 'resolved' &&
+                {getReportStatus(report) === 'resolved' &&
                   'Problema resuelto'
                 }
               </span>
@@ -314,15 +352,26 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                   <span className="rp-resolve-confirm-text">¿Marcar como resuelto?</span>
                   <button
                     className="rp-resolve-btn rp-resolve-btn--yes"
-                    onClick={() => {
-                      setConfirmingResolve(false)
-                      onUpdateStatus?.(report.id, 'resolved')
+                    disabled={resolving}
+                    onClick={async () => {
+                      if (resolving) return
+                      setResolving(true)
+                      setResolveError(null)
+                      try {
+                        await onUpdateStatus(report.id, 'resolved')
+                        setConfirmingResolve(false)
+                      } catch {
+                        setResolveError('No se pudo actualizar el estado. Intenta de nuevo.')
+                      } finally {
+                        setResolving(false)
+                      }
                     }}
                   >
-                    Sí, resuelto
+                    {resolving ? 'Guardando...' : 'Sí, resuelto'}
                   </button>
                   <button
                     className="rp-resolve-btn rp-resolve-btn--no"
+                    disabled={resolving}
                     onClick={() => setConfirmingResolve(false)}
                   >
                     Cancelar
@@ -339,6 +388,8 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
             )}
           </div>
 
+          {resolveError && <p className="error-message" role="alert">{resolveError}</p>}
+
           {/* Descripción */}
           <section className="rp-section">
             <h4>Descripción</h4>
@@ -348,7 +399,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
           {/* Materiales — solo Punto ecológico */}
           {subtypeLabels.length > 0 && (
             <section className="rp-section">
-              <h4>Materiales aceptados</h4>
+              <h4>{cat?.id === 'punto_ecologico' ? 'Materiales aceptados' : 'Detalles del problema'}</h4>
               <div className="rp-subtypes">
                 {subtypeLabels.map((s) => (
                   <span key={s.id} className="rp-subtype-chip" style={{ borderColor: color, color: cat.mapColor }}>
@@ -372,7 +423,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
 
             <div className="rp-meta-item rp-meta-full">
               <span className="rp-meta-label">
-                Dirección aproximada
+                {report.scope === 'insa' ? 'Ubicación en el campus' : 'Dirección aproximada'}
                 {cat?.applyPrivacy && (
                   <span className="rp-privacy-tag" title="Ubicación aproximada">
                     🔒 aprox.
@@ -383,7 +434,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                 📍 {direccion}
               </span>
               <span className="rp-meta-coords">
-                {report.lat?.toFixed(4)}, {report.lng?.toFixed(4)}
+                {report.scope === 'insa' ? `Plano: ${Math.round(report.lat)}, ${Math.round(report.lng)}` : `${report.lat?.toFixed(4)}, ${report.lng?.toFixed(4)}`}
               </span>
             </div>
 
@@ -407,7 +458,8 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
               )}
             </h4>
 
-            {comentarios.length === 0 ? (
+            {commentsError && <p className="rp-comment-error" role="alert">{commentsError}</p>}
+            {!commentsError && comentarios.length === 0 ? (
               <p className="rp-comments-empty">Sin comentarios aún. Sé el primero.</p>
             ) : (
               <div className="rp-comments-list">
@@ -420,7 +472,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                     color={color}
                   />
                 ))}
-                <div ref={comentariosEndRef} />
+
               </div>
             )}
 
@@ -429,6 +481,7 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
                 <textarea
                   className="rp-comment-input"
                   placeholder="Escribe un comentario..."
+                  aria-label="Escribe un comentario"
                   value={textoNuevo}
                   onChange={(e) => setTextoNuevo(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -470,3 +523,23 @@ function ReportPopup({ report, onClose, currentUserId, currentUser, onUpdateStat
 }
 
 export default ReportPopup
+ComentarioItem.propTypes = {
+  comentario: PropTypes.object.isRequired,
+  currentUserId: PropTypes.string,
+  reportId: PropTypes.string,
+  color: PropTypes.string,
+}
+
+RespaldoBar.propTypes = {
+  hasImage: PropTypes.bool,
+  confirmCount: PropTypes.number,
+}
+
+ReportPopup.propTypes = {
+  report: PropTypes.object.isRequired,
+  onClose: PropTypes.func,
+  currentUserId: PropTypes.string,
+  currentUser: PropTypes.object,
+  onUpdateStatus: PropTypes.func,
+  embedded: PropTypes.bool,
+}
