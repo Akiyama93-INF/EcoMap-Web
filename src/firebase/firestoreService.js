@@ -17,11 +17,11 @@ import {
   query,
   where,
   orderBy,
-  arrayUnion,
+  runTransaction,
   onSnapshot,
   Timestamp,
 } from 'firebase/firestore'
-import { db } from './firebaseInit'
+import { db, auth } from './firebaseInit'
 
 const REPORTS_COLLECTION  = 'reports'
 const USERS_COLLECTION    = 'users'
@@ -61,12 +61,31 @@ async function enrichReports(rawReports) {
   })
 }
 
+// Las reglas de Firestore deben aplicar también estos permisos en el servidor.
+function requireUser(expectedId) {
+  const uid = auth.currentUser?.uid
+  if (!uid || (expectedId && expectedId !== uid)) {
+    throw new Error('Debes iniciar sesión con la cuenta correspondiente')
+  }
+  return uid
+}
+
+async function requireOwner(reportId) {
+  const uid = requireUser()
+  const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
+  if (!snap.exists()) throw new Error('Reporte no encontrado')
+  if (snap.data().userId !== uid) throw new Error('No tienes permiso para modificar este reporte')
+  return { uid, snap }
+}
+
 export const firestoreService = {
 // Crear nuevo reporte
 async createReport(reportData) {
   try {
+    const uid = requireUser(reportData.userId)
     const docRef = await addDoc(collection(db, REPORTS_COLLECTION), {
       ...reportData,
+      userId: uid,
 
       // Contexto donde fue creado el reporte:
       // "nacional" o "insa"
@@ -163,11 +182,15 @@ async createReport(reportData) {
     }
   },
 
-  // Actualizar reporte
+  // Solo el autor autenticado puede editar campos permitidos.
   async updateReport(reportId, reportData) {
     try {
+      await requireOwner(reportId)
+      const allowed = ['description', 'category', 'subtypes', 'imageUrl', 'metadata']
+      const changes = Object.fromEntries(Object.entries(reportData).filter(([key]) => allowed.includes(key)))
+      if (!Object.keys(changes).length) throw new Error('No hay cambios permitidos')
       await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
-        ...reportData,
+        ...changes,
         updatedAt: Timestamp.now(),
       })
     } catch (error) {
@@ -175,50 +198,45 @@ async createReport(reportData) {
     }
   },
 
-  // Eliminar reporte
   async deleteReport(reportId) {
     try {
+      await requireOwner(reportId)
       await deleteDoc(doc(db, REPORTS_COLLECTION, reportId))
     } catch (error) {
       throw new Error(`Error al eliminar reporte: ${error.message}`)
     }
   },
 
-  // ── Fase 3: Reportes colaborativos ───────────────────────────────────────
+  // Transacción: no se pierden confirmaciones simultáneas.
   async confirmReport(reportId, userId) {
     try {
-      const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
-      if (!snap.exists()) throw new Error('Reporte no encontrado')
-
-      const data = snap.data()
-      if ((data.confirmations ?? []).includes(userId)) {
-        throw new Error('Ya confirmaste este reporte')
-      }
-
-      await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
-        confirmations: arrayUnion(userId),
-        confirmationCount: (data.confirmationCount ?? 0) + 1,
-        updatedAt: Timestamp.now(),
+      const uid = requireUser(userId)
+      const reportRef = doc(db, REPORTS_COLLECTION, reportId)
+      return await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(reportRef)
+        if (!snapshot.exists()) throw new Error('Reporte no encontrado')
+        const data = snapshot.data()
+        if (data.userId === uid) throw new Error('No puedes confirmar tu propio reporte')
+        const confirmations = Array.isArray(data.confirmations) ? data.confirmations : []
+        if (confirmations.includes(uid)) throw new Error('Ya confirmaste este reporte')
+        const next = [...confirmations, uid]
+        transaction.update(reportRef, {
+          confirmations: next,
+          confirmationCount: next.length,
+          updatedAt: Timestamp.now(),
+        })
+        return { confirmationCount: next.length }
       })
-
-      return { confirmationCount: (data.confirmationCount ?? 0) + 1 }
     } catch (error) {
       throw new Error(`Error al confirmar reporte: ${error.message}`)
     }
   },
 
-  // ── Fase 4: Estados de reporte ────────────────────────────────────────────
-  // userId requerido para validar ownership antes de escribir
   async updateReportStatus(reportId, status, userId) {
     try {
-      const snap = await getDoc(doc(db, REPORTS_COLLECTION, reportId))
-      if (!snap.exists()) throw new Error('Reporte no encontrado')
-
-      // Validar que el usuario sea el dueño del reporte
-      if (userId && snap.data().userId !== userId) {
-        throw new Error('No tienes permiso para modificar este reporte')
-      }
-
+      requireUser(userId)
+      if (!['active', 'resolved'].includes(status)) throw new Error('Estado no válido')
+      await requireOwner(reportId)
       await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
         status,
         updatedAt: Timestamp.now(),
@@ -228,12 +246,13 @@ async createReport(reportData) {
     }
   },
 
-  // ── Basureros limpios ─────────────────────────────────────────────────────
   async markAsClean(reportId, userId) {
     try {
+      const uid = requireUser(userId)
+      await requireOwner(reportId)
       await updateDoc(doc(db, REPORTS_COLLECTION, reportId), {
         status: 'resolved',
-        resolvedBy: userId,
+        resolvedBy: uid,
         resolvedAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       })
@@ -247,6 +266,10 @@ async createReport(reportData) {
   // Agregar comentario a un reporte
   async addComment(reportId, { userId, userName, photoURL = null, text }) {
     try {
+      requireUser(userId)
+      if (typeof text !== 'string' || !text.trim() || text.trim().length > 1000) {
+        throw new Error('El comentario debe tener entre 1 y 1000 caracteres')
+      }
       const ref = collection(db, REPORTS_COLLECTION, reportId, COMMENTS_COLLECTION)
       await addDoc(ref, {
         userId,
@@ -282,6 +305,7 @@ async createReport(reportData) {
   // Eliminar comentario — solo el autor puede hacerlo (también reforzado en reglas)
   async deleteComment(reportId, commentId, userId) {
     try {
+      requireUser(userId)
       const ref = doc(db, REPORTS_COLLECTION, reportId, COMMENTS_COLLECTION, commentId)
       const snap = await getDoc(ref)
       if (!snap.exists()) throw new Error('Comentario no encontrado')
