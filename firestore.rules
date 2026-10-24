@@ -1,0 +1,85 @@
+
+match /resolutionRequests/{requestId} {
+
+  function authenticated() {
+    return request.auth != null;
+  }
+
+  function reportExists() {
+    return exists(
+      /databases/$(database)/documents/reports/$(reportId)
+    );
+  }
+
+  function activeReport() {
+    return reportExists()
+      && get(
+        /databases/$(database)/documents/reports/$(reportId)
+      ).data.status == 'active';
+  }
+
+  function validRequest() {
+    return request.resource.data.keys().hasOnly([
+        'requestedBy',
+        'status',
+        'createdAt',
+        'evidenceUrl'
+      ])
+      && request.resource.data.keys().hasAll([
+        'requestedBy',
+        'status',
+        'createdAt'
+      ])
+      && request.resource.data.requestedBy
+          == request.auth.uid
+      && request.resource.data.status == 'pending'
+      && request.resource.data.createdAt
+          == request.time
+      && (
+        !('evidenceUrl' in request.resource.data)
+        || (
+          request.resource.data.evidenceUrl is string
+          && request.resource.data.evidenceUrl.size() <= 2048
+        )
+      );
+  }
+
+  allow read: if true;
+
+  allow create: if authenticated()
+    && activeReport()
+    && validRequest();
+
+  // El estado de la solicitud lo modifica
+  // exclusivamente un proceso confiable.
+  allow update, delete: if false;
+
+  match /votes/{userId} {
+
+    function requestPath() {
+      return /databases/$(database)/documents/
+        reports/$(reportId)/
+        resolutionRequests/$(requestId);
+    }
+
+    allow read: if true;
+
+    allow create: if request.auth != null
+      && request.auth.uid == userId
+      && exists(requestPath())
+      && get(requestPath()).data.status == 'pending'
+      && get(requestPath()).data.requestedBy != userId
+      && request.resource.data.keys().hasOnly([
+        'userId',
+        'createdAt'
+      ])
+      && request.resource.data.keys().hasAll([
+        'userId',
+        'createdAt'
+      ])
+      && request.resource.data.userId == userId
+      && request.resource.data.createdAt == request.time;
+
+    allow update, delete: if false;
+  }
+}

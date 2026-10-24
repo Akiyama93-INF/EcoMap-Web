@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // context/ThemeContext.jsx
 // Fuente única de verdad para el tema oscuro/claro de EcoMap
 // El tema sigue automáticamente la preferencia del sistema operativo
@@ -32,4 +33,7 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   )
+}
+ThemeProvider.propTypes = {
+  children: PropTypes.node,
 }

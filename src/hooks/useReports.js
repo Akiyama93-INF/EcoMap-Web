@@ -36,21 +36,24 @@ export const useReports = (scope = 'nacional') => {
   useEffect(() => {
     setLoading(true)
 
+    let active = true
     const unsubscribe = firestoreService.subscribeToReportsByScope(
       scope,
       (data) => {
+        if (!active) return
         setReports(data)
         setLoading(false)
         setError(null)
       },
       (err) => {
+        if (!active) return
         console.error('Error obteniendo reportes:', err)
         setError(err.message)
         setLoading(false)
       }
     )
 
-    return () => unsubscribe()
+    return () => { active = false; unsubscribe() }
   }, [scope])
 
   // Se mantiene por compatibilidad

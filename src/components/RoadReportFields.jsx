@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // components/RoadReportFields.jsx — nuevo en Fase 4 (Obstrucción vial)
 // Campos extra opcionales para la categoría obstruccion_vial.
 // Props:
@@ -117,3 +118,8 @@ function RoadReportFields({ values = {}, onChange }) {
 }
 
 export default RoadReportFields
+
+RoadReportFields.propTypes = {
+  values: PropTypes.object,
+  onChange: PropTypes.func,
+}

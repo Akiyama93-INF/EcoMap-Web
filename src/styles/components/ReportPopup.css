@@ -620,3 +620,20 @@
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
+/* Inline detail keeps the desktop map usable. */
+.rp-overlay { z-index: 2000; }
+.rp-card:focus { outline: none; }
+.rp-card > * { flex-shrink: 0; }
+.rp-embedded { height: 100%; }
+.rp-embedded .rp-card { max-width: none; max-height: none; min-height: 100%; border-radius: 0; box-shadow: none; overflow: visible; }
+.rp-embedded .rp-header { border-radius: 0; }
+.rp-back { display: block; width: 100%; text-align: left; padding: .8rem 1rem; border: 0; border-bottom: 1px solid var(--border-subtle); background: var(--white); color: var(--text-color); font-size: .85rem; box-shadow: none; }
+.rp-back:hover { background: var(--hover-bg); transform: none; }
+.rp-meta-value, .rp-meta-address, .rp-section p { overflow-wrap: anywhere; }
+.rp-status-row { flex-wrap: wrap; gap: .75rem; }
+.rp-resolve-confirm { flex-wrap: wrap; }
+.rp-close { min-width: 36px; min-height: 36px; }
+@media (max-width: 600px) {
+  .rp-card { max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+@media (prefers-reduced-motion: reduce) { .rp-card { animation: none; } }

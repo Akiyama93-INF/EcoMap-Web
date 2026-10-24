@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import '../styles/components/Loading.css'
 
@@ -11,3 +12,7 @@ function Loading({ message = 'Cargando...' }) {
 }
 
 export default Loading
+
+Loading.propTypes = {
+  message: PropTypes.string,
+}

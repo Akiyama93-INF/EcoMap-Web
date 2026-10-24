@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // INSAMapView — Mapa interno del Instituto Nacional de Santa Ana (INSA)
 //
 // Usa Leaflet con CRS.Simple: sin tiles de OpenStreetMap.
@@ -54,12 +55,7 @@ function createCategoryIcon(color, symbol) {
   })
 }
 
-const CATEGORY_ICONS = {
-  [CATEGORIES.CLANDESTINE_DUMP.id]:       createCategoryIcon(CATEGORIES.CLANDESTINE_DUMP.mapColor,       CATEGORIES.CLANDESTINE_DUMP.icon),
-  [CATEGORIES.ECOLOGICAL_POINT.id]:       createCategoryIcon(CATEGORIES.ECOLOGICAL_POINT.mapColor,       CATEGORIES.ECOLOGICAL_POINT.icon),
-  [CATEGORIES.ENVIRONMENTAL_INCIDENT.id]: createCategoryIcon(CATEGORIES.ENVIRONMENTAL_INCIDENT.mapColor, CATEGORIES.ENVIRONMENTAL_INCIDENT.icon),
-  [CATEGORIES.CONTAMINATED_RIVER.id]:     createCategoryIcon(CATEGORIES.CONTAMINATED_RIVER.mapColor,     CATEGORIES.CONTAMINATED_RIVER.icon),
-}
+const CATEGORY_ICONS = Object.fromEntries(Object.values(CATEGORIES).map((cat) => [cat.id, createCategoryIcon(cat.mapColor || cat.color, cat.icon)]))
 const DEFAULT_ICON = createCategoryIcon('#7f8c8d', '📍')
 const CLICKED_ICON = createCategoryIcon('#3498db', '📍')
 
@@ -234,6 +230,19 @@ function INSAMapView({
   const markerRefs = useRef({})
   const mapRef     = useRef(null)
 
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const observer = new ResizeObserver(() => map.invalidateSize({ animate: false }))
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [])
+
+
+  useEffect(() => {
+    if (!showReportForm) setClickedLocation(null)
+  }, [showReportForm])
+
   // Invalidar tamaño cuando el sidebar abre/cierra (igual que MapView)
   useEffect(() => {
     if (mapRef.current) {
@@ -332,3 +341,34 @@ function INSAMapView({
 }
 
 export default INSAMapView
+
+PlaноClickHandler.propTypes = {
+  onPlaноClick: PropTypes.func,
+}
+
+MarkerOpener.propTypes = {
+  markerId: PropTypes.string,
+  markerRefs: PropTypes.shape({ current: PropTypes.object }),
+}
+
+FlyTo.propTypes = {
+  position: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number, accuracy: PropTypes.number }),
+  zoom: PropTypes.number,
+}
+
+INSAPopup.propTypes = {
+  marker: PropTypes.object,
+  cat: PropTypes.object,
+  currentUserId: PropTypes.string,
+  onConfirmReport: PropTypes.func,
+}
+
+INSAMapView.propTypes = {
+  onMarkerPlace: PropTypes.func,
+  markers: PropTypes.arrayOf(PropTypes.object),
+  flyTarget: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number }),
+  selectedMarkerId: PropTypes.string,
+  currentUserId: PropTypes.string,
+  onConfirmReport: PropTypes.func,
+  showReportForm: PropTypes.bool,
+}

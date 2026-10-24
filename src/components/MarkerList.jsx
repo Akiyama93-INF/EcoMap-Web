@@ -5,8 +5,9 @@
 //   - onMarkerSelect se llama igual que antes — sin cambios en la API.
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { getCategoryByName, CATEGORIES_ARRAY } from '../utils/categories'
+import { getCategoryByName, CATEGORIES } from '../utils/categories'
 import '../styles/components/MarkerList.css'
+import { getReportStatus } from '../utils/reportFilters'
 
 const APP_URL = 'https://ecomapwebproyect.netlify.app'
 
@@ -23,7 +24,7 @@ function buildWhatsAppLink(marker) {
       })
     : null
 
-  const link = `${APP_URL}/?reportId=${marker.id}`
+  const link = `${APP_URL}/${marker.scope === 'insa' ? 'insa' : 'nacional'}?reportId=${marker.id}`
 
   const lines = [
     `${icon} *Reporte EcoMap*`,
@@ -53,10 +54,11 @@ function Highlight({ text, query }) {
   )
 }
 
-function MarkerList({ markers = [], onMarkerSelect }) {
-  const [activeFilter,  setActiveFilter]  = useState('all')
-  const [sortBy,        setSortBy]        = useState('fecha')
-  const [searchQuery,   setSearchQuery]   = useState('')
+function MarkerList({ markers = [], visibleMarkers = [], filters, onFiltersChange, onMarkerSelect }) {
+  const { category: activeFilter, status, sortBy, search: searchQuery } = filters
+  const setActiveFilter = (category) => onFiltersChange({ ...filters, category })
+  const setSortBy = (sortBy) => onFiltersChange({ ...filters, sortBy })
+  const setSearchQuery = useCallback((search) => onFiltersChange({ ...filters, search }), [filters, onFiltersChange])
   const [searchFocused, setSearchFocused] = useState(false)
   // ID del item que acaba de ser seleccionado (para el glow temporal)
   const [selectedId,    setSelectedId]    = useState(null)
@@ -79,12 +81,12 @@ function MarkerList({ markers = [], onMarkerSelect }) {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [setSearchQuery])
 
   const clearSearch = useCallback(() => {
     setSearchQuery('')
     inputRef.current?.focus()
-  }, [])
+  }, [setSearchQuery])
 
   const countById = useMemo(() => {
     const counts = {}
@@ -95,38 +97,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
     return counts
   }, [markers])
 
-  const filtered = useMemo(() => {
-    let base = activeFilter === 'all'
-      ? markers
-      : markers.filter((m) => {
-          const cat = getCategoryByName(m.category)
-          return cat?.id === activeFilter
-        })
-
-    const q = searchQuery.trim().toLowerCase()
-    if (q) {
-      base = base.filter((m) => {
-        const haystack = [
-          m.description ?? '',
-          m.category    ?? '',
-          m.userName    ?? '',
-          m.department  ?? '',
-        ].join(' ').toLowerCase()
-        return haystack.includes(q)
-      })
-    }
-
-    return [...base].sort((a, b) => {
-      if (sortBy === 'confirmaciones') {
-        const ca = a.confirmationCount ?? a.confirmations?.length ?? 0
-        const cb = b.confirmationCount ?? b.confirmations?.length ?? 0
-        return cb - ca
-      }
-      const da = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0)
-      const db = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0)
-      return db - da
-    })
-  }, [markers, activeFilter, sortBy, searchQuery])
+  const filtered = visibleMarkers
 
   const isSearching = searchQuery.trim().length > 0
 
@@ -180,7 +151,12 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           )}
         </div>
 
-        <div className="marker-filter">
+        <div className="status-filters" role="group" aria-label="Estado del reporte">
+          {[['all', 'Todos'], ['pending', 'Pendientes'], ['confirmed', 'Confirmados'], ['resolved', 'Resueltos']].map(([value, label]) => (
+            <button key={value} className={`status-filter${status === value ? ' active' : ''}`} aria-pressed={status === value} onClick={() => onFiltersChange({ ...filters, status: value })}>{label}</button>
+          ))}
+        </div>
+        <div className="marker-filter" role="group" aria-label="Categoría del reporte">
           <button
             className={`filter-btn${activeFilter === 'all' ? ' active' : ''}`}
             onClick={() => setActiveFilter('all')}
@@ -190,7 +166,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
               <span className="filter-btn-count">{markers.length}</span>
             )}
           </button>
-          {CATEGORIES_ARRAY.filter((cat) => (countById[cat.id] ?? 0) > 0).map((cat) => (
+          {Object.values(CATEGORIES).filter((cat) => (countById[cat.id] ?? 0) > 0).map((cat) => (
             <button
               key={cat.id}
               className={`filter-btn${activeFilter === cat.id ? ' active' : ''}`}
@@ -226,15 +202,16 @@ function MarkerList({ markers = [], onMarkerSelect }) {
           {isSearching ? (
             <>
               <span className="ml-empty-icon">🔍</span>
-              <p className="ml-empty-msg">Sin resultados para <strong>"{searchQuery}"</strong></p>
+              <p className="ml-empty-msg">Sin resultados para <strong>“{searchQuery}”</strong></p>
               <button className="ml-empty-clear" onClick={clearSearch}>Limpiar búsqueda</button>
             </>
           ) : (
             <>
               <span className="ml-empty-icon">🗺️</span>
               <p className="ml-empty-msg">
-                {markers.length === 0 ? 'No hay reportes disponibles' : 'No hay reportes en esta categoría'}
+                {markers.length === 0 ? 'Tu comunidad empieza contigo. Crea el primer reporte.' : 'No hay reportes con estos filtros.'}
               </p>
+              {markers.length > 0 && <button className="ml-empty-clear" onClick={() => onFiltersChange({ category: 'all', status: 'all', sortBy: 'fecha', search: '' })}>Restablecer filtros</button>}
             </>
           )}
         </div>
@@ -247,6 +224,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
             const confirmCount = marker.confirmationCount ?? marker.confirmations?.length ?? 0
             const q = searchQuery.trim()
             const isSelected = selectedId === marker.id
+            const reportStatus = getReportStatus(marker)
 
             const fecha = marker.createdAt?.toDate
               ? marker.createdAt.toDate().toLocaleDateString('es-SV', {
@@ -274,7 +252,8 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                   onClick={() => handleItemClick(marker)}
                 />
 
-                <div className="marker-item-body" onClick={() => handleItemClick(marker)}>
+                <div className="marker-item-body" role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleItemClick(marker) } }} aria-label={`Ver ${marker.category} en el mapa`} onClick={() => handleItemClick(marker)}>
+                  {marker.imageUrl && <img className="marker-item-photo" src={marker.imageUrl} alt="Fotografía del reporte" loading="lazy" onError={(event) => { event.currentTarget.hidden = true }} />}
                   <div className="marker-item-header">
                     <span className="marker-item-badge" style={{ backgroundColor: color + '22', color }}>
                       {icon} <Highlight text={marker.category} query={q} />
@@ -285,10 +264,10 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                           ✅ {confirmCount}
                         </span>
                       )}
-                      <span className={`marker-status-badge marker-status-${marker.status ?? 'pending'}`}>
-                        {(marker.status === 'pending' || !marker.status) && 'Pendiente'}
-                        {marker.status === 'confirmed' && 'Confirmado'}
-                        {marker.status === 'resolved'  && 'Resuelto'}
+                      <span className={`marker-status-badge marker-status-${reportStatus}`}>
+                        {(reportStatus === 'pending') && 'Pendiente'}
+                        {reportStatus === 'confirmed' && 'Confirmado'}
+                        {reportStatus === 'resolved'  && 'Resuelto'}
                       </span>
                     </div>
                   </div>
@@ -310,6 +289,7 @@ function MarkerList({ markers = [], onMarkerSelect }) {
                     </div>
                   )}
 
+                  <p className="marker-item-location">{marker.scope === 'insa' ? 'Campus INSA' : marker.department || 'El Salvador'}</p>
                   <div className="marker-item-footer">
                     <small>👤 <Highlight text={marker.userName ?? 'Anónimo'} query={q} /></small>
                     {fecha && <small>📅 {fecha}</small>}
@@ -338,6 +318,18 @@ function MarkerList({ markers = [], onMarkerSelect }) {
       )}
     </div>
   )
+}
+
+const validateArray = (props, name) => Array.isArray(props[name]) ? null : new Error(`${name} debe ser una lista`)
+const validateCallback = (props, name) => typeof props[name] === 'function' ? null : new Error(`${name} debe ser una función`)
+const validateOptionalString = (props, name) => props[name] == null || typeof props[name] === 'string' ? null : new Error(`${name} debe ser texto`)
+Highlight.propTypes = { text: validateOptionalString, query: validateOptionalString }
+MarkerList.propTypes = {
+  markers: validateArray,
+  visibleMarkers: validateArray,
+  filters: (props, name) => ['category', 'status', 'sortBy', 'search'].every((key) => typeof props[name]?.[key] === 'string') ? null : new Error('Filtros inválidos'),
+  onFiltersChange: validateCallback,
+  onMarkerSelect: validateCallback,
 }
 
 export default MarkerList

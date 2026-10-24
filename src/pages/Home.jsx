@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Home — v3.4.3
 // Layout split-screen en móvil:
 //   - Mapa fijo en la mitad superior (45dvh), lista scrolleable en la inferior.
@@ -6,7 +7,7 @@
 //   - Desktop mantiene el grid de dos columnas sin cambios.
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import MapView           from '../components/MapView'
 import INSAMapView       from '../components/INSAMapView'
 import ReportForm        from '../components/ReportForm'
@@ -20,6 +21,8 @@ import firestoreService  from '../firebase/firestoreService'
 import cloudinaryService from '../firebase/cloudinaryService'
 import { getCategoryByName } from '../utils/categories'
 import '../styles/pages/Home.css'
+import { filterReports } from '../utils/reportFilters'
+import useDesktopLayout from '../hooks/useDesktopLayout'
 
 const EL_SALVADOR_BOUNDS = {
   minLat: 12.8, maxLat: 14.8,
@@ -42,6 +45,10 @@ function Home({ scope = 'nacional' }) {
   } = useReports(scope)
   const { isDark } = useTheme()
   const mapSectionRef = useRef(null)
+  const selectionTimer = useRef(null)
+  const isDesktop = useDesktopLayout()
+  const [sidebarWidth, setSidebarWidth] = useState(400)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [showReportForm,   setShowReportForm]   = useState(false)
@@ -50,15 +57,21 @@ function Home({ scope = 'nacional' }) {
   const [openReport,       setOpenReport]       = useState(null)
   const [confirmError,     setConfirmError]     = useState(null)
 
-  const myReportCount = useMemo(() => {
-    if (!user) return 0
-    return markers.filter((m) => m.userId === user.uid).length
-  }, [markers, user])
-
-  const displayName = user?.displayName || user?.email?.split('@')[0] || ''
+  const [filters, setFilters] = useState({ category: 'all', status: 'all', sortBy: 'fecha', search: '' })
+  const [panelExpanded, setPanelExpanded] = useState(false)
+  const [selectingLocation, setSelectingLocation] = useState(false)
+  const visibleMarkers = useMemo(() => filterReports(markers, filters), [markers, filters])
 
   useEffect(() => {
-    const handler = (e) => setOpenReport(e.detail)
+    const handler = (e) => {
+      if (!e.detail?.id) return
+      setOpenReport(e.detail)
+      setSidebarCollapsed(false)
+      setShowReportForm(false)
+      setSelectedLocation(null)
+      setSelectingLocation(false)
+      setFlyTarget({ lat: e.detail.lat, lng: e.detail.lng })
+    }
     window.addEventListener('ecomap:openReport', handler)
     return () => window.removeEventListener('ecomap:openReport', handler)
   }, [])
@@ -100,6 +113,9 @@ function Home({ scope = 'nacional' }) {
       }
     }
 
+    setSelectingLocation(false)
+    setOpenReport(null)
+    setSidebarCollapsed(false)
     setSelectedLocation(location)
     if (user) {
       setShowReportForm(true)
@@ -129,12 +145,18 @@ function Home({ scope = 'nacional' }) {
   const handleMarkerSelect = useCallback((marker) => {
     setFlyTarget({ lat: marker.lat, lng: marker.lng })
     setSelectedMarkerId(marker.id)
-
-    setTimeout(() => {
+    if (isDesktop) {
+      setOpenReport(marker)
+      setSidebarCollapsed(false)
+    }
+    clearTimeout(selectionTimer.current)
+    selectionTimer.current = setTimeout(() => {
       setSelectedMarkerId(null)
       setFlyTarget(null)
     }, 1800)
-  }, [])
+  }, [isDesktop])
+
+  useEffect(() => () => clearTimeout(selectionTimer.current), [])
 
   const handleReportSubmit = async (formData, onProgress) => {
     try {
@@ -194,11 +216,29 @@ function Home({ scope = 'nacional' }) {
     setFlyTarget(null)
   }
 
+  const closeReport = useCallback(() => setOpenReport(null), [])
+  const currentReport = openReport ? markers.find((marker) => marker.id === openReport.id) : null
+  const reportDetails = currentReport && (
+    <ReportPopup
+      key={currentReport.id}
+      report={currentReport}
+      embedded={isDesktop}
+      onClose={closeReport}
+      currentUserId={user?.uid ?? null}
+      currentUser={user ?? null}
+      onUpdateStatus={async (reportId, status) => {
+        await firestoreService.updateReportStatus(reportId, status, user?.uid)
+        refresh()
+      }}
+    />
+  )
+
   if (authLoading || reportsLoading) return <Loading message="Iniciando EcoMap..." />
 
   const mapProps = {
     onMarkerPlace:   handleMarkerPlace,
-    markers,
+    markers: visibleMarkers,
+    externalLocation: selectedLocation,
     flyTarget,
     selectedMarkerId,
     currentUserId:   user?.uid ?? null,
@@ -212,18 +252,25 @@ function Home({ scope = 'nacional' }) {
         <div className="warning-message">{confirmError}</div>
       )}
 
-      <MarkerList markers={markers} onMarkerSelect={handleMarkerSelect} />
+      <MarkerList markers={markers} visibleMarkers={visibleMarkers} filters={filters} onFiltersChange={setFilters} onMarkerSelect={handleMarkerSelect} />
     </>
   )
 
   return (
-    <div className="home">
+    <div className={`home${panelExpanded ? ' home--expanded' : ''}${showReportForm ? ' home--reporting' : ''}${isDesktop && sidebarCollapsed ? ' home--sidebar-collapsed' : ''}`} style={{ '--sidebar-width': `${sidebarWidth}px` }}>
       {isOffline && (
         <div className="offline-banner">
           Sin conexión — mostrando datos en caché. Los reportes nuevos se enviarán al reconectarse.
         </div>
       )}
 
+      <header className="explore-header">
+        <div className="explore-heading"><span className="explore-eyebrow">CUIDEMOS NUESTRO ENTORNO</span><h1>{scope === 'insa' ? 'Tu campus, mejor cada día' : 'Un mejor entorno empieza aquí'}</h1></div>
+        <div className="explore-scopes" aria-label="Mapa actual"><NavLink to="/nacional" className={scope === 'nacional' ? 'active' : ''}>Nacional</NavLink><NavLink to="/insa" className={scope === 'insa' ? 'active' : ''}>INSA</NavLink></div>
+        <button className="desktop-panel-toggle" aria-expanded={!sidebarCollapsed} aria-controls="explore-sidebar" onClick={() => setSidebarCollapsed((value) => !value)} disabled={showReportForm}>{sidebarCollapsed ? 'Mostrar reportes' : 'Ampliar mapa'}</button>
+        <button className="explore-report" onClick={() => { setSelectingLocation((value) => !value); setPanelExpanded(false) }} aria-pressed={selectingLocation} disabled={showReportForm}>{selectingLocation ? 'Cancelar selección' : '+ Reportar'}</button>
+      </header>
+      {selectingLocation && <div className="explore-instruction" role="status">Selecciona el lugar del problema en el {scope === 'insa' ? 'plano del campus' : 'mapa'} para crear tu reporte.</div>}
       <div className="home-container">
         {/* Mapa — mitad superior en móvil, columna izquierda en desktop */}
         <div className="map-section" ref={mapSectionRef}>
@@ -235,8 +282,15 @@ function Home({ scope = 'nacional' }) {
         </div>
 
         {/* Sidebar — mitad inferior scrolleable en móvil, columna derecha en desktop */}
-        <div className="sidebar">
-          {showReportForm && user ? (
+        <aside className="sidebar" id="explore-sidebar" aria-label="Reportes y detalles" hidden={isDesktop && sidebarCollapsed}>
+          <div className="desktop-panel-tools">
+            <label htmlFor="sidebar-width">Ancho del panel</label>
+            <input id="sidebar-width" type="range" min="340" max="560" step="20" value={sidebarWidth} onChange={(event) => setSidebarWidth(Number(event.target.value))} aria-valuetext={`${sidebarWidth} píxeles`} />
+            <button onClick={() => setSidebarWidth(400)} title="Restablecer ancho del panel" aria-label="Restablecer ancho del panel">↺</button>
+          </div>
+          {!showReportForm && <button className="panel-toggle" aria-expanded={panelExpanded} aria-controls="report-list-panel" onClick={() => setPanelExpanded((value) => !value)}><span className="panel-grip" />{panelExpanded ? 'Ver más mapa' : 'Ver más reportes'}<span aria-hidden="true">{panelExpanded ? '↓' : '↑'}</span></button>}
+          <div id="report-list-panel" className="sidebar-content">
+          {isDesktop && reportDetails ? reportDetails : showReportForm && user ? (
             <ReportForm
               location={selectedLocation}
               onSubmit={handleReportSubmit}
@@ -254,28 +308,21 @@ function Home({ scope = 'nacional' }) {
           ) : (
             sidebarContent
           )}
-        </div>
+          </div>
+        </aside>
       </div>
 
       {showReportForm && (
         <div className="report-form-backdrop" onClick={handleCancelForm} />
       )}
 
-      {openReport && (
-        <ReportPopup
-          report={openReport}
-          onClose={() => setOpenReport(null)}
-          currentUserId={user?.uid ?? null}
-          currentUser={user ?? null}
-          onUpdateStatus={async (reportId, status) => {
-            await firestoreService.updateReportStatus(reportId, status, user?.uid)
-            refresh()
-            setOpenReport(null)
-          }}
-        />
-      )}
+      {!isDesktop && reportDetails}
+
     </div>
   )
 }
 
 export default Home
+Home.propTypes = {
+  scope: PropTypes.oneOf(['nacional', 'insa']),
+}

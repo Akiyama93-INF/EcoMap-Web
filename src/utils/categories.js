@@ -158,7 +158,7 @@ export const getCategoryById = (id) =>
   CATEGORIES_ARRAY.find((c) => c.id === id)
 
 export const getCategoryByName = (name) =>
-  CATEGORIES_ARRAY.find((c) => c.name === name)
+  Object.values(CATEGORIES).find((c) => c.name === name)
 
 export const getCategoryByType = (type) =>
   CATEGORIES_ARRAY.find((c) => c.reportType === type)

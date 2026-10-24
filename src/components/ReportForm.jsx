@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // ReportForm — Fase 4 + Infraestructura urbana + Cámara nativa Android
 // Cámara: en APK usa @capacitor/camera (nativo), en browser usa input file estándar
 // Actualizado: botón "Usar mi ubicación" con GPS de alta precisión (solo en scope nacional)
@@ -117,6 +118,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [progressMsg,  setProgressMsg]  = useState(null)
   const [error,        setError]        = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
   const [nearbyReport, setNearbyReport] = useState(null)
   const [gpsAccuracy,  setGpsAccuracy]  = useState(null)
 
@@ -125,6 +127,17 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
   const { takePhoto, pickFromGallery, isNative, error: camError } = useCameraNative()
   const { gpsLoading, gpsError, getPosition } = useFormGeolocation()
+
+  // Crear una sola URL temporal y liberarla al cambiar o desmontar la imagen.
+  useEffect(() => {
+    if (!formData.image) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(formData.image)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [formData.image])
 
   const MAX_IMAGE_SIZE      = 5 * 1024 * 1024
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -360,7 +373,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
         {formData.image ? (
           <div className="image-preview-container">
             <div className="image-preview-wrapper">
-              <img src={URL.createObjectURL(formData.image)} alt="Vista previa"
+              <img src={previewUrl ?? undefined} alt="Vista previa"
                 className="image-preview" />
             </div>
             <div className="image-preview-footer">
@@ -432,7 +445,7 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 
           {!location && !gpsLoading && (
             <p className="location-hint">
-              Toca "Usar mi ubicación" o haz clic directamente en el mapa.
+              Toca “Usar mi ubicación” o haz clic directamente en el mapa.
             </p>
           )}
         </div>
@@ -465,3 +478,12 @@ function ReportForm({ location, onSubmit, onCancel, markers = [], onConfirmExist
 }
 
 export default ReportForm
+ReportForm.propTypes = {
+  location: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number }),
+  onSubmit: PropTypes.func,
+  onCancel: PropTypes.func,
+  markers: PropTypes.arrayOf(PropTypes.object),
+  onConfirmExisting: PropTypes.func,
+  scope: PropTypes.oneOf(['nacional', 'insa']),
+  onLocationChange: PropTypes.func,
+}

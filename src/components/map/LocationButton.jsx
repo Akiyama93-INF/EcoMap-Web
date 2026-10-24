@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Botón de "Mi Ubicación"
 // Solicita geolocalización y notifica al mapa padre
 
@@ -41,3 +42,9 @@ function LocationButton({ onClick, loading, error }) {
 }
 
 export default LocationButton
+
+LocationButton.propTypes = {
+  onClick: PropTypes.func,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+}

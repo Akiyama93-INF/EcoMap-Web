@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // components/PipelineReportFields.jsx — nuevo en Fase 4 (Tubería dañada)
 // Campos extra opcionales para la categoría tuberia_danada.
 // Props:
@@ -127,3 +128,8 @@ function PipelineReportFields({ values = {}, onChange }) {
 }
 
 export default PipelineReportFields
+
+PipelineReportFields.propTypes = {
+  values: PropTypes.object,
+  onChange: PropTypes.func,
+}

@@ -1,7 +1,7 @@
 // Hook que carga y actualiza el perfil del usuario actual desde Firestore
 
 import { useState, useEffect, useCallback } from 'react'
-import { getProfile, saveProfile, updateDisplayName } from '../firebase/profileService'
+import { getProfile, updateDisplayName } from '../firebase/profileService'
 import authService from '../firebase/authService'
 
 export const useUserProfile = () => {

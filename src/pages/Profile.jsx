@@ -1,351 +1,107 @@
-// Página /perfil — v3.4.0
-// Cambios vs v3.3:
-//   - Sección de impacto personal: pendientes, confirmados, resueltos,
-//     confirmaciones realizadas a otros reportes
-//   - Grid de stats expandido a 2x2
-//   - Frase de contribución si hay actividad
-
-import React, { useState, useEffect, useRef } from 'react'
-import useAuth          from '../hooks/useAuth'
-import useUserProfile   from '../hooks/useUserProfile'
-import UserAvatar       from '../components/UserAvatar'
+import React, { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
+import useAuth from '../hooks/useAuth'
+import ProfileOverview from '../components/ProfileOverview'
+import Loading from '../components/Loading'
 import cloudinaryService from '../firebase/cloudinaryService'
-import firestoreService  from '../firebase/firestoreService'
-import authService       from '../firebase/authService'
-import { saveProfile }   from '../firebase/profileService'
-import { getCategoryByName } from '../utils/categories'
-import '../styles/pages/Profile.css'
+import firestoreService from '../firebase/firestoreService'
+import authService from '../firebase/authService'
+import { getProfile } from '../firebase/profileService'
+import '../styles/pages/Workspace.css'
 
-const MAX_PHOTO_MB = 5
-const ACCEPTED     = 'image/jpeg,image/png,image/webp'
+function ProfileAccount({ user }) {
+  const [account, setAccount] = useState({ name: user.displayName || '', email: user.email || '', photoURL: user.photoURL || null })
+  const [draftName, setDraftName] = useState(user.displayName || '')
+  const [accountLoading, setAccountLoading] = useState(true)
+  const [accountError, setAccountError] = useState(null)
+  const [reports, setReports] = useState([])
+  const [reportsLoading, setReportsLoading] = useState(true)
+  const [reportsError, setReportsError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+  const [success, setSuccess] = useState(null)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState(null)
 
-function Profile() {
-  const { user }                             = useAuth()
-  const { profile, loading, updateProfile }  = useUserProfile()
-
-  const [displayName,   setDisplayName]   = useState('')
-  const [saving,        setSaving]        = useState(false)
-  const [success,       setSuccess]       = useState(false)
-  const [error,         setError]         = useState(null)
-  const [myReports,     setMyReports]     = useState([])
-
-  // Foto de perfil
-  const [photoPreview,  setPhotoPreview]  = useState(null)
-  const [photoFile,     setPhotoFile]     = useState(null)
-  const [photoUploading, setPhotoUploading] = useState(false)
-  const [photoError,    setPhotoError]    = useState(null)
-  const fileInputRef = useRef(null)
-
-  // Precarga datos cuando el perfil llega
   useEffect(() => {
-    if (profile?.displayName) setDisplayName(profile.displayName)
-    if (profile?.photoURL)    setPhotoPreview(profile.photoURL)
-    else if (user?.photoURL)  setPhotoPreview(user.photoURL)
-  }, [profile, user])
+    let active = true
+    getProfile(user.uid).then((profile) => {
+      if (!active) return
+      const name = profile?.displayName || user.displayName || ''
+      setAccount({ name, email: user.email || '', photoURL: profile?.photoURL || user.photoURL || null, createdAt: profile?.createdAt })
+      setDraftName(name)
+    }).catch(() => { if (active) setAccountError('No pudimos cargar todos los datos de tu cuenta. Se muestran los datos de tu sesión.') })
+      .finally(() => { if (active) setAccountLoading(false) })
+    return () => { active = false }
+  }, [user.uid])
 
-  // Reportes propios
   useEffect(() => {
-    if (!user) return
-    firestoreService.getReportsByUser(user.uid).then((own) => {
-      setMyReports(own)
-    })
-  }, [user])
+    let active = true
+    setReportsLoading(true); setReportsError(null)
+    firestoreService.getReportsByUser(user.uid).then((own) => { if (active) setReports(own) })
+      .catch(() => { if (active) setReportsError('No pudimos cargar tus reportes. Tus datos siguen guardados.') })
+      .finally(() => { if (active) setReportsLoading(false) })
+    return () => { active = false }
+  }, [user.uid, attempt])
 
-  // ── Métricas de impacto ──────────────────────────────────────────────────
-  const statsImpacto = React.useMemo(() => {
-    const pendientes  = myReports.filter((r) => (r.status ?? 'pending') === 'pending').length
-    const confirmados = myReports.filter((r) => r.status === 'confirmed').length
-    const resueltos   = myReports.filter((r) => r.status === 'resolved').length
-    // Total de confirmaciones que el usuario recibió en sus reportes
-    const confirmacionesRecibidas = myReports.reduce((acc, r) => {
-      return acc + (r.confirmationCount ?? r.confirmations?.length ?? 0)
-    }, 0)
-    return { total: myReports.length, pendientes, confirmados, resueltos, confirmacionesRecibidas }
-  }, [myReports])
-
-  // ── Selección de imagen ──────────────────────────────────────────────────
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('El archivo debe ser una imagen (JPG, PNG o WebP)')
-      return
-    }
-    if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
-      setPhotoError(`La imagen no puede superar ${MAX_PHOTO_MB} MB`)
-      return
-    }
-
-    setPhotoError(null)
-    setPhotoFile(file)
-    const url = URL.createObjectURL(file)
+  useEffect(() => {
+    if (!photoFile) { setPhotoPreview(null); return }
+    const url = URL.createObjectURL(photoFile)
     setPhotoPreview(url)
-  }
+    return () => URL.revokeObjectURL(url)
+  }, [photoFile])
 
-  // ── Upload de foto ───────────────────────────────────────────────────────
-  const handlePhotoUpload = async () => {
-    if (!photoFile || !user) return
-    setPhotoError(null)
-    setPhotoUploading(true)
+  const saveName = async (event) => {
+    event.preventDefault()
+    if (saving || photoBusy) return
+    const name = draftName.trim()
+    if (name.length < 2 || name.length > 80) { setSaveError('El nombre debe tener entre 2 y 80 caracteres.'); return }
+    setSaving(true); setSaveError(null); setSuccess(null)
+    try { await authService.updateUserProfile(name); setAccount((previous) => ({ ...previous, name })); setDraftName(name); setSuccess('Tu nombre se actualizó correctamente.') }
+    catch { setSaveError('No pudimos guardar el nombre. Intenta de nuevo.') }
+    finally { setSaving(false) }
+  }
+  const selectPhoto = (file) => {
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { setPhotoError('Selecciona una imagen JPG, PNG o WebP.'); return }
+    if (file.size > 5 * 1024 * 1024) { setPhotoError('La imagen no puede superar 5 MB.'); return }
+    setPhotoError(null); setPhotoFile(file)
+  }
+  const savePhoto = async () => {
+    if (!photoFile || photoBusy || saving) return
+    setPhotoBusy(true); setPhotoError(null)
     try {
       const photoURL = await cloudinaryService.uploadImage(photoFile)
-      await authService.updateUserProfile(displayName || profile?.displayName || '', photoURL)
-      await saveProfile(user.uid, {
-        displayName: displayName || profile?.displayName || '',
-        email: user.email,
-        photoURL,
-      })
-      setPhotoPreview(photoURL)
-      setPhotoFile(null)
-    } catch (err) {
-      setPhotoError('Error al subir la foto: ' + err.message)
-    } finally {
-      setPhotoUploading(false)
-    }
+      if (typeof photoURL !== 'string' || !photoURL.startsWith('https://')) throw new Error('Respuesta de imagen no válida')
+      await authService.updateUserProfile(account.name || user.displayName || user.email?.split('@')[0] || 'Usuario', photoURL)
+      setAccount((previous) => ({ ...previous, photoURL })); setPhotoFile(null)
+    } catch { setPhotoError('No pudimos guardar la foto. Puedes volver a intentarlo.') }
+    finally { setPhotoBusy(false) }
   }
-
-  // ── Guardar nombre ───────────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
-    setSuccess(false)
-    if (displayName.trim().length < 2) {
-      setError('El nombre debe tener al menos 2 caracteres')
-      return
-    }
-    setSaving(true)
-    try {
-      await updateProfile(displayName.trim())
-      setSuccess(true)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
-    }
+  const logout = async () => {
+    if (loggingOut || !window.confirm('¿Quieres cerrar tu sesión de EcoMap?')) return
+    setLoggingOut(true); setLogoutError(null)
+    try { await authService.logout() }
+    catch { setLogoutError('No pudimos cerrar la sesión. Intenta de nuevo.'); setLoggingOut(false) }
   }
-
-  if (loading) return <p className="profile-loading">Cargando perfil...</p>
-
-  const name = displayName || user?.email?.split('@')[0] || ''
-  const tieneActividad = statsImpacto.total > 0
-
-  return (
-    <div className="profile-container">
-      <div className="profile-card">
-
-        {/* Avatar + foto */}
-        <div className="profile-avatar-row">
-          <div className="profile-photo-wrapper">
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Foto de perfil"
-                className="profile-photo"
-              />
-            ) : (
-              <UserAvatar name={name} size={72} />
-            )}
-
-            <button
-              type="button"
-              className="profile-photo-edit-btn"
-              onClick={() => fileInputRef.current?.click()}
-              title="Cambiar foto de perfil"
-              aria-label="Cambiar foto de perfil"
-            >
-              📷
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPTED}
-              onChange={handlePhotoChange}
-              className="profile-photo-input"
-              aria-hidden="true"
-            />
-          </div>
-
-          <div className="profile-name-block">
-            <h1 className="profile-title">{name}</h1>
-            <span className="profile-email-label">{user?.email}</span>
-          </div>
-        </div>
-
-        {/* Confirmación de foto */}
-        {photoFile && (
-          <div className="profile-photo-confirm">
-            <span className="profile-photo-filename">{photoFile.name}</span>
-            <button
-              type="button"
-              className="submit-btn submit-btn--photo"
-              onClick={handlePhotoUpload}
-              disabled={photoUploading}
-            >
-              {photoUploading ? 'Subiendo...' : 'Guardar foto'}
-            </button>
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={() => {
-                setPhotoFile(null)
-                setPhotoPreview(profile?.photoURL ?? user?.photoURL ?? null)
-              }}
-              disabled={photoUploading}
-            >
-              Cancelar
-            </button>
-          </div>
-        )}
-
-        {photoError && <p className="profile-error">{photoError}</p>}
-
-        {/* ── Impacto personal ────────────────────────────────────────────── */}
-        <div className="profile-impacto">
-          <h2 className="profile-impacto-title">Tu contribución</h2>
-
-          <div className="profile-stats-grid">
-            <div className="profile-stat-item">
-              <span className="stat-num">{statsImpacto.total}</span>
-              <span className="stat-lbl">Reportes enviados</span>
-            </div>
-            <div className="profile-stat-item profile-stat-item--confirmed">
-              <span className="stat-num">{statsImpacto.confirmados}</span>
-              <span className="stat-lbl">Confirmados</span>
-            </div>
-            <div className="profile-stat-item profile-stat-item--resolved">
-              <span className="stat-num">{statsImpacto.resueltos}</span>
-              <span className="stat-lbl">Resueltos</span>
-            </div>
-            <div className="profile-stat-item profile-stat-item--community">
-              <span className="stat-num">{statsImpacto.confirmacionesRecibidas}</span>
-              <span className="stat-lbl">Confirmaciones recibidas</span>
-            </div>
-          </div>
-
-          {tieneActividad && (
-            <p className="profile-impacto-frase">
-              {statsImpacto.resueltos > 0
-                ? `${statsImpacto.resueltos} de tus reportes han sido atendidos. Gracias por contribuir.`
-                : 'Tu participación ayuda a identificar problemas ambientales en la comunidad.'
-              }
-            </p>
-          )}
-        </div>
-
-        {/* Formulario de nombre */}
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="form-group">
-            <label htmlFor="displayName">Nombre</label>
-            <input
-              type="text"
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Tu nombre"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              type="email"
-              id="email"
-              value={user?.email ?? ''}
-              disabled
-              className="input-disabled"
-            />
-          </div>
-
-          {error   && <p className="profile-error">{error}</p>}
-          {success && <p className="profile-success">Perfil actualizado.</p>}
-
-          <button type="submit" disabled={saving} className="submit-btn">
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </form>
-
-        {/* Historial de reportes propios */}
-        {myReports.length > 0 && (
-          <div className="profile-history">
-            <h2 className="profile-history-title">Mis reportes</h2>
-            <ul className="profile-history-list">
-              {myReports.map((r) => {
-                const cat   = getCategoryByName(r.category)
-                const color = cat?.color ?? '#7f8c8d'
-                const fecha = r.createdAt?.toDate
-                  ? r.createdAt.toDate().toLocaleDateString('es-SV', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                    })
-                  : null
-
-                const statusLabel = {
-                  pending:   'Pendiente',
-                  confirmed: 'Confirmado',
-                  resolved:  'Resuelto',
-                }[r.status ?? 'pending'] ?? 'Pendiente'
-
-                const statusColor = {
-                  pending:   '#f39c12',
-                  confirmed: '#27ae60',
-                  resolved:  '#2980b9',
-                }[r.status ?? 'pending'] ?? '#f39c12'
-
-                return (
-                  <li key={r.id} className="profile-history-item">
-                    <span
-                      className="profile-history-stripe"
-                      style={{ backgroundColor: color }}
-                    />
-                    <div className="profile-history-body">
-                      <div className="profile-history-row">
-                        <span className="profile-history-cat" style={{ color }}>
-                          {cat?.icon} {r.category}
-                        </span>
-                        <span
-                          className="profile-history-status"
-                          style={{ color: statusColor }}
-                        >
-                          {statusLabel}
-                        </span>
-                      </div>
-                      <p className="profile-history-desc">
-                        {r.description
-                          ? r.description.substring(0, 80) + (r.description.length > 80 ? '...' : '')
-                          : 'Sin descripción'}
-                      </p>
-                      {fecha && (
-                        <span className="profile-history-fecha">📅 {fecha}</span>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
-
-                {/* Cerrar sesión */}
-        <button
-          type="button"
-          className="profile-logout-btn"
-          onClick={async () => {
-            if (!window.confirm('¿Cerrar sesión?')) return
-            try {
-              await authService.logout()
-            } catch (err) {
-              console.error('Error al cerrar sesión:', err)
-            }
-          }}
-        >
-          Cerrar sesión
-        </button>
-
-      </div>
-    </div>
-  )
+  if (accountLoading) return <Loading message="Cargando tu cuenta…" />
+  return <ProfileOverview account={account} accountError={accountError}
+    editor={{ draftName, onNameChange: (value) => { setDraftName(value); setSuccess(null); setSaveError(null) }, onSubmit: saveName, saving, error: saveError, success }}
+    photo={{ previewUrl: photoPreview, fileName: photoFile?.name, error: photoError, busy: photoBusy, onSelect: selectPhoto, onSave: savePhoto, onCancel: () => { setPhotoFile(null); setPhotoError(null) } }}
+    activity={{ reports, loading: reportsLoading, error: reportsError, onRetry: () => setAttempt((value) => value + 1) }}
+    session={{ onLogout: logout, busy: loggingOut, error: logoutError }} />
 }
+ProfileAccount.propTypes = { user: PropTypes.object.isRequired }
 
-export default Profile
+export default function Profile() {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading message="Cargando tu cuenta…" />
+  if (!user) return <div className="workspace account-page"><section className="surface account-guest"><span className="workspace-kicker">TU CUENTA</span><h1>Tu actividad, en un solo lugar</h1><p>Inicia sesión para consultar tus reportes y administrar tu perfil.</p><Link className="ui-button" to="/login">Iniciar sesión</Link><Link className="text-button" to="/nacional">Volver al mapa</Link></section></div>
+  return <ProfileAccount key={user.uid} user={user} />
+}

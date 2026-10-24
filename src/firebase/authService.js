@@ -128,14 +128,15 @@ const authService = {
     )
   },
 
-  async updateUserProfile(displayName) {
+  async updateUserProfile(displayName, photoURL) {
     try {
       const user = auth.currentUser
       if (!user) throw new Error('No hay sesión activa.')
-      await updateProfile(user, { displayName })
+      const changes = { displayName, ...(photoURL !== undefined ? { photoURL } : {}) }
+      await updateProfile(user, changes)
       await setDoc(
         doc(db, USERS_COLLECTION, user.uid),
-        { displayName, updatedAt: Timestamp.now() },
+        { ...changes, updatedAt: Timestamp.now() },
         { merge: true }
       )
     } catch (error) {

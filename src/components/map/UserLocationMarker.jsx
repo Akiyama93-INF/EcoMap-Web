@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // Marcador azul de la ubicación actual del usuario
 // Actualizado:
 //   - Doble pulso animado para mejor visibilidad
@@ -54,3 +55,6 @@ function UserLocationMarker({ position }) {
 }
 
 export default UserLocationMarker
+UserLocationMarker.propTypes = {
+  position: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number, accuracy: PropTypes.number }),
+}

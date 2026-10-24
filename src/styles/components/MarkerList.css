@@ -492,3 +492,32 @@
   color: var(--secondary-color);
   border: 1px solid #2980b9;
 }
+
+/* Report cards and shared filters */
+.marker-list { max-height: none; overflow: visible; border-radius: 0; box-shadow: none; padding: 1rem; }
+.marker-list-header { border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; }
+.marker-list-title { color: var(--text-color); font-size: 1.1rem; letter-spacing: -.025em; margin-bottom: .85rem; }
+.marker-list-count { background: var(--success-bg); color: var(--text-color); }
+.ml-search-wrapper { border-radius: 10px; padding: .7rem; margin-bottom: .75rem; }
+.status-filters { display: flex; gap: 4px; overflow-x: auto; margin-bottom: .75rem; padding-bottom: 4px; }
+.status-filter { flex: 1; padding: .55rem .4rem; border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--text-light); font-size: .72rem; font-weight: 600; box-shadow: none; }
+.status-filter.active { color: var(--text-color); background: var(--success-bg); border-color: var(--border-subtle); }
+.marker-filter { gap: .4rem; }
+.filter-btn { min-height: 32px; }
+.marker-sort { margin-top: .65rem; }
+.marker-list ul { gap: .75rem; }
+.marker-item { border-radius: 12px; }
+.marker-item:hover { box-shadow: none; border-color: var(--primary-color); transform: none; }
+.marker-item-body { padding: .85rem; }
+.marker-item-photo { width: 100%; height: 126px; object-fit: cover; border-radius: 8px; margin-bottom: .75rem; }
+.marker-item-photo[hidden] { display: none; }
+.marker-item-header { flex-wrap: wrap; gap: .5rem; }
+.marker-item-badge { max-width: 100%; font-size: .72rem; }
+.marker-item-desc { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--text-color); line-height: 1.5; margin: .5rem 0; }
+.marker-item-location { color: var(--text-light); font-size: .75rem; margin: .25rem 0; }
+.marker-item-footer { flex-wrap: wrap; gap: .25rem .75rem; }
+.marker-item-actions { padding: 0 .6rem 0 0; }
+.marker-whatsapp-btn { width: 34px; height: 34px; }
+.marker-item-arrow { min-width: 30px; min-height: 36px; justify-content: center; }
+.marker-item-body:focus-visible, .status-filter:focus-visible, .filter-btn:focus-visible { outline: 2px solid var(--text-color); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .marker-item--selected { animation: none; } .marker-item { transition: none; } }

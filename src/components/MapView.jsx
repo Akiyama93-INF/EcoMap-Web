@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 // MapView — Fase 3
 // Añadido sobre Fase 2:
 //   - approximateLocation(): desplaza el marcador para categorías con applyPrivacy
@@ -53,12 +54,7 @@ function createCategoryIcon(color, symbol) {
   })
 }
 
-const CATEGORY_ICONS = {
-  [CATEGORIES.CLANDESTINE_DUMP.id]:       createCategoryIcon(CATEGORIES.CLANDESTINE_DUMP.mapColor,       CATEGORIES.CLANDESTINE_DUMP.icon),
-  [CATEGORIES.ECOLOGICAL_POINT.id]:       createCategoryIcon(CATEGORIES.ECOLOGICAL_POINT.mapColor,       CATEGORIES.ECOLOGICAL_POINT.icon),
-  [CATEGORIES.ENVIRONMENTAL_INCIDENT.id]: createCategoryIcon(CATEGORIES.ENVIRONMENTAL_INCIDENT.mapColor, CATEGORIES.ENVIRONMENTAL_INCIDENT.icon),
-  [CATEGORIES.CONTAMINATED_RIVER.id]:     createCategoryIcon(CATEGORIES.CONTAMINATED_RIVER.mapColor,     CATEGORIES.CONTAMINATED_RIVER.icon),
-}
+const CATEGORY_ICONS = Object.fromEntries(Object.values(CATEGORIES).map((cat) => [cat.id, createCategoryIcon(cat.mapColor || cat.color, cat.icon)]))
 const DEFAULT_ICON  = createCategoryIcon('#7f8c8d', '📍')
 const CLICKED_ICON  = createCategoryIcon('#3498db', '📍')
 
@@ -140,6 +136,15 @@ function MapView({
 
   const markerRefs = useRef({})
   const mapRef     = useRef(null)
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const observer = new ResizeObserver(() => map.invalidateSize({ animate: false }))
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [])
+
 
   // Sincronizar pin azul con externalLocation (viene de Home.selectedLocation)
   // Esto cubre el caso donde la ubicación se actualiza por GPS desde el formulario
@@ -308,10 +313,6 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
       })
     : 'Sin fecha'
 
-  const subtypeLabels = (cat?.subtypes ?? [])
-    .filter((s) => (marker.subtypes ?? []).includes(s.id))
-    .map((s) => `${s.icon} ${s.label}`)
-
   const handleConfirm = async () => {
     if (!currentUserId || alreadyConfirmed || confirming || isOwner) return
     setConfirming(true)
@@ -386,3 +387,35 @@ function ReportPopupLeaflet({ marker, cat, currentUserId, onConfirmReport }) {
 }
 
 export default MapView
+MapBounds.propTypes = {
+  onOutOfBounds: PropTypes.func,
+}
+
+MapClickHandler.propTypes = {
+  onMapClick: PropTypes.func,
+}
+
+MarkerOpener.propTypes = {
+  markerId: PropTypes.string,
+  markerRefs: PropTypes.shape({ current: PropTypes.object }),
+}
+
+MapView.propTypes = {
+  scope: PropTypes.oneOf(['nacional', 'insa']),
+  onMarkerPlace: PropTypes.func,
+  markers: PropTypes.arrayOf(PropTypes.object),
+  flyTarget: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number }),
+  selectedMarkerId: PropTypes.string,
+  currentUserId: PropTypes.string,
+  onConfirmReport: PropTypes.func,
+  showReportForm: PropTypes.bool,
+  isDark: PropTypes.bool,
+  externalLocation: PropTypes.shape({ lat: PropTypes.number, lng: PropTypes.number }),
+}
+
+ReportPopupLeaflet.propTypes = {
+  marker: PropTypes.object,
+  cat: PropTypes.object,
+  currentUserId: PropTypes.string,
+  onConfirmReport: PropTypes.func,
+}

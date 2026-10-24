@@ -1,14 +1,17 @@
-import React from 'react'
+import PropTypes from 'prop-types'
+import React, { useState } from 'react'
 import '../styles/components/UserAvatar.css'
 
 function UserAvatar({ name = '', size = 32, photoURL = null }) {
+  const [failedURL, setFailedURL] = useState(null)
   const initial = name.trim().charAt(0).toUpperCase() || '?'
 
-  if (photoURL) {
+  if (photoURL && failedURL !== photoURL) {
     return (
       <img
         src={photoURL}
         alt={name}
+        onError={() => setFailedURL(photoURL)}
         className="user-avatar user-avatar--photo"
         style={{ width: `${size}px`, height: `${size}px` }}
       />
@@ -26,3 +29,8 @@ function UserAvatar({ name = '', size = 32, photoURL = null }) {
 }
 
 export default UserAvatar
+UserAvatar.propTypes = {
+  name: PropTypes.string,
+  size: PropTypes.number,
+  photoURL: PropTypes.string,
+}

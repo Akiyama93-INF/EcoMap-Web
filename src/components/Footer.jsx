@@ -20,7 +20,7 @@ function Footer() {
 ¿Tienes dudas, sugerencias o encontraste un problema en EcoMap?
 Estamos disponibles para ayudarte.
 
-<a href="mailto:ecomap.proyecto@gmail.com" class="contact-email">
+<a href="mailto:ecomap.proyecto@gmail.com" className="contact-email">
     
 <br></br>ecomap.proyecto@gmail.com
 </a>
