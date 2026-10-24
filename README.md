@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.jpg" alt="Logotipo de EcoMap" width="80" height="80" />
+  <img src="docs/assets/ecomap-banner.png" alt="EcoMap — Juntos por un El Salvador más limpio. Banner de presentación." width="100%" />
   <h1>EcoMap</h1>
   <p>Reportes ciudadanos para cuidar el entorno de El Salvador.</p>
   <p>
