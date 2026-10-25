@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, pruebas y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Instalar dependencias fijadas
+        run: npm ci --legacy-peer-deps
+      - name: Revisar el código
+        run: npm run lint
+      - name: Ejecutar pruebas
+        run: npm test
+      - name: Compilar la web
+        run: npm run build
