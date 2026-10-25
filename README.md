@@ -9,6 +9,10 @@
   </p>
 </div>
 
+[![CI](https://github.com/Akiyama93-INF/EcoMap-Web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Akiyama93-INF/EcoMap-Web/actions/workflows/ci.yml)
+
+**Web y repositorio: v3.5.6 · Android: v3.5.5.** Esta actualización de mantenimiento prepara la colaboración y las comprobaciones automatizadas. Consulta el [historial de cambios](CHANGELOG.md).
+
 EcoMap permite **ubicar, documentar y dar seguimiento a problemas ambientales y de infraestructura**. Combina un mapa nacional con un plano independiente del **Instituto Nacional de Santa Ana (INSA)**, reportes con fotografías, confirmaciones comunitarias y estadísticas.
 
 Se puede explorar sin cuenta. Para crear reportes, confirmar problemas o comentar, se necesita iniciar sesión.
@@ -19,7 +23,7 @@ Se puede explorar sin cuenta. Para crear reportes, confirmar problemas o comenta
 
 **React 18 · Vite · Leaflet · Firebase · Cloudinary · Capacitor 8**
 
-[Capturas](#capturas) · [Funciones](#funciones) · [Instalación](#instalación) · [Comprobaciones](#comprobaciones) · [Despliegue](#despliegue) · [Android](#android) · [Documentación](#documentación)
+[Capturas](#capturas) · [Funciones](#funciones) · [Instalación](#instalación) · [Comprobaciones](#comprobaciones) · [Despliegue](#despliegue) · [Android](#android) · [Documentación](#documentación) · [Contribuir](#contribuir) · [Licencia](#licencia-y-código-abierto)
 
 ## Capturas
 
@@ -132,6 +136,7 @@ El mapa nacional usa tiles de OpenStreetMap; el tema oscuro se aplica con estilo
 
 - **Node.js 22 o superior**, requerido por la CLI de Capacitor incluida en el proyecto.
 - npm.
+- Git para clonar el repositorio y colaborar.
 - Un proyecto Firebase y configuración de Cloudinary para utilizar los servicios.
 - Android Studio únicamente para trabajar en la versión Android.
 
@@ -194,6 +199,8 @@ npm run build
 
 Las pruebas automatizadas se complementan con una revisión en escritorio y teléfono. Los cambios de autenticación, fotos o escritura de datos deben comprobarse con una cuenta de prueba; el APK requiere una revisión en dispositivo.
 
+El workflow [CI](.github/workflows/ci.yml) ejecuta `npm ci --legacy-peer-deps`, lint, pruebas y build con **Node.js 22** en los push a `main` y Pull Requests dirigidos a `main`. Utiliza caché de npm y permiso `contents: read`, sin secretos ni pasos de despliegue. Las pruebas de utilidades y la compilación no requieren conectarse a Firebase o Cloudinary.
+
 ## Despliegue
 
 Netlify compila la aplicación con `npm run build`, publica `dist/` y reescribe las rutas para React Router. La configuración está en [`netlify.toml`](netlify.toml).
@@ -211,6 +218,8 @@ Las variables de entorno deben configurarse también en Netlify para los context
 
 ## Android
 
+La versión Android se mantiene en **v3.5.5**. La actualización web v3.5.6 no modifica el proyecto nativo ni genera una APK.
+
 El proyecto nativo está en [`android/`](android/). Para sincronizar la web:
 
 ```bash
@@ -227,6 +236,7 @@ Consulta las [publicaciones del repositorio](https://github.com/Akiyama93-INF/Ec
 
 ```text
 EcoMap-Web/
+├── .github/                 # CI y plantillas de Issues y Pull Requests
 ├── android/                 # Aplicación Android con Capacitor
 ├── docs/                    # Guías y capturas reales del producto
 ├── public/                  # Logotipo y plano del INSA
@@ -243,6 +253,9 @@ EcoMap-Web/
 ├── capacitor.config.json
 ├── netlify.toml
 ├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── LICENSE                  # Licencia MIT y aviso de autoría
 └── README.md
 ```
 
@@ -253,12 +266,15 @@ EcoMap-Web/
 - [Configuración de servicios y modelo de datos](docs/services-setup.md).
 - [Procedencia y actualización de las capturas](docs/screenshots/README.md).
 - [Historial de cambios](CHANGELOG.md).
+- [Guía de contribución](CONTRIBUTING.md).
+- [Código de conducta](CODE_OF_CONDUCT.md).
+- [Alcance del mantenimiento v3.5.6 y pendientes](docs/maintenance-v3.5.6.md).
 
 ## Contribuir
 
 Abre una propuesta o incidencia en [GitHub Issues](https://github.com/Akiyama93-INF/EcoMap-Web/issues) explicando el problema, el resultado esperado y, si corresponde, cómo reproducirlo.
 
-Para contribuir código, crea una rama, limita el cambio a un objetivo y ejecuta lint, pruebas y compilación. Si cambia la interfaz, incluye capturas de escritorio y móvil. Documenta las nuevas variables o integraciones necesarias sin añadir credenciales al repositorio.
+La [guía de contribución](CONTRIBUTING.md) explica cómo preparar el entorno, trabajar desde una rama o fork, ejecutar las comprobaciones y abrir un Pull Request. Revisa también el [código de conducta](CODE_OF_CONDUCT.md). Las plantillas de GitHub ayudan a describir errores, propuestas y cambios con la información necesaria para revisarlos.
 
 ## Equipo y créditos
 
@@ -266,7 +282,6 @@ Proyecto del **Instituto Nacional de Santa Ana (INSA)**, Especialidad **ITSI 2.�
 
 Mapas y datos geográficos de **OpenStreetMap** y sus colaboradores, con Leaflet para su visualización. Las fotografías y descripciones de los reportes corresponden a sus autores. El plano institucional y el logotipo forman parte de los recursos de EcoMap.
 
-**Licencia:**
 ## Licencia y código abierto
 
 EcoMap es un proyecto de código abierto distribuido bajo la **Licencia MIT**.
@@ -279,12 +294,6 @@ Por ello, cualquier persona puede:
 - **Modificar** el código para desarrollar nuevas funcionalidades.
 - **Contribuir** mediante Pull Requests y propuestas de mejora.
 - **Compartir y reutilizar** el software en otros proyectos, incluso comerciales, respetando las condiciones de la licencia MIT.
-
-### Contribuciones
-
-Las contribuciones de la comunidad son bienvenidas. Puedes reportar errores, sugerir funcionalidades o proponer mejoras al código.
-
-Nuestro objetivo es que EcoMap continúe evolucionando como una herramienta abierta, colaborativa y accesible.
 
 ### Derechos de autor
 

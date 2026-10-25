@@ -1,5 +1,16 @@
 # Historial de EcoMap
 
+## v3.5.6 — 25 de octubre de 2026
+
+- Versión web y del repositorio actualizada a 3.5.6 en el paquete y el lockfile, sin cambiar dependencias.
+- Descripción ampliada a reportes ambientales, comunitarios y de infraestructura; metadato de licencia MIT.
+- CI con Node.js 22, caché de npm, instalación reproducible, lint, pruebas y build en push y Pull Requests a `main`.
+- Guía de contribución, código de conducta y plantillas en español para errores, propuestas y Pull Requests.
+- README con versiones web y Android diferenciadas, badge de CI y enlaces a la documentación de colaboración.
+- Alcance y recomendaciones pendientes documentados en `docs/maintenance-v3.5.6.md`.
+
+Android permanece en **3.5.5**. Se conserva la licencia MIT y su autoría. Esta actualización no modifica funcionalidades, servicios externos ni configuración nativa; no crea una Release ni publica una APK.
+
 ## Actualización web — 24 de octubre de 2026
 
 - Detalle lateral y ancho ajustable para explorar reportes en escritorio.

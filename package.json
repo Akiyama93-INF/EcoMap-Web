@@ -1,9 +1,10 @@
 {
   "name": "ecomap-basureros-el-salvador",
   "private": true,
-  "version": "3.5.5",
+  "version": "3.5.6",
   "type": "module",
-  "description": "Plataforma web para reportar basureros clandestinos en El Salvador",
+  "description": "Plataforma de reportes ciudadanos sobre problemas ambientales, comunitarios y de infraestructura en El Salvador y el campus INSA",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
