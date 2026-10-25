@@ -2,11 +2,23 @@
   <img src="docs/assets/ecomap-banner.png" alt="EcoMap — Juntos por un El Salvador más limpio. Banner de presentación." width="100%" />
   <h1>EcoMap</h1>
   <p>Reportes ciudadanos para cuidar el entorno de El Salvador.</p>
-  <p>
-    <a href="https://ecomapwebproyect.netlify.app">Abrir aplicación</a> ·
-    <a href="https://github.com/Akiyama93-INF/EcoMap-Web/releases">Releases</a> ·
-    <a href="CHANGELOG.md">Historial de cambios</a>
-  </p>
+<p>
+  <a href="https://ecomapwebproyect.netlify.app">
+    <img src="https://img.shields.io/badge/ABRIR-ECOMAP-168B47?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Abrir EcoMap">
+  </a>
+  <a href="https://github.com/Akiyama93-INF/EcoMap-Web/releases">
+    <img src="https://img.shields.io/badge/GITHUB-RELEASES-238636?style=for-the-badge&logo=github&logoColor=white" alt="Releases">
+  </a>
+  <a href="https://github.com/Akiyama93-INF/EcoMap-Web/releases">
+    <img src="https://img.shields.io/badge/DESCARGAR-ANDROID_APK-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android APK">
+  </a>
+  <a href="CHANGELOG.md">
+    <img src="https://img.shields.io/badge/HISTORIAL-CAMBIOS-64748B?style=for-the-badge&logo=git&logoColor=white" alt="Historial de cambios">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/LICENCIA-MIT-007EC6?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="Licencia MIT">
+  </a>
+</p>
 </div>
 
 [![CI](https://github.com/Akiyama93-INF/EcoMap-Web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Akiyama93-INF/EcoMap-Web/actions/workflows/ci.yml)
