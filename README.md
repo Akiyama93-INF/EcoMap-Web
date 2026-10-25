@@ -266,4 +266,28 @@ Proyecto del **Instituto Nacional de Santa Ana (INSA)**, Especialidad **ITSI 2.�
 
 Mapas y datos geográficos de **OpenStreetMap** y sus colaboradores, con Leaflet para su visualización. Las fotografías y descripciones de los reportes corresponden a sus autores. El plano institucional y el logotipo forman parte de los recursos de EcoMap.
 
-**Licencia:** pendiente de documentar en un archivo `LICENSE`; el repositorio no lo incluye actualmente.
+**Licencia:**
+## Licencia y código abierto
+
+EcoMap es un proyecto de código abierto distribuido bajo la **Licencia MIT**.
+
+Creemos que la tecnología puede contribuir al cuidado del medioambiente mediante la colaboración y el intercambio de conocimientos.
+
+Por ello, cualquier persona puede:
+
+- **Clonar** el repositorio y explorar su funcionamiento.
+- **Modificar** el código para desarrollar nuevas funcionalidades.
+- **Contribuir** mediante Pull Requests y propuestas de mejora.
+- **Compartir y reutilizar** el software en otros proyectos, incluso comerciales, respetando las condiciones de la licencia MIT.
+
+### Contribuciones
+
+Las contribuciones de la comunidad son bienvenidas. Puedes reportar errores, sugerir funcionalidades o proponer mejoras al código.
+
+Nuestro objetivo es que EcoMap continúe evolucionando como una herramienta abierta, colaborativa y accesible.
+
+### Derechos de autor
+
+Copyright © 2026 Akiyama93-INF.
+
+Consulta el archivo [LICENSE](LICENSE) para conocer los términos completos de uso, modificación y distribución.
